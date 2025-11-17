@@ -1,5 +1,8 @@
 FROM node:20-alpine
 
+# Install bash for debugging
+RUN apk add --no-cache bash
+
 WORKDIR /app
 
 # Install dependencies
