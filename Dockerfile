@@ -12,7 +12,11 @@ RUN npm ci --only=production
 # Copy source code
 COPY . .
 
-# Build Astro app
+# Accept build-time argument for API key
+ARG ANTHROPIC_API_KEY
+ENV ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+
+# Build Astro app with environment variable available
 RUN npm run build
 
 # Expose port

@@ -11,5 +11,11 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true
+  },
+  vite: {
+    // Don't replace process.env during build - keep it dynamic
+    define: {
+      'process.env': 'process.env'
+    }
   }
 });
