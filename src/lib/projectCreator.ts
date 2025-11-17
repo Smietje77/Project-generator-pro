@@ -17,7 +17,8 @@ export class ProjectCreator {
   constructor() {
     this.analyzer = new ProjectAnalyzer();
     this.promptGenerator = new PromptGenerator();
-    this.baseProjectPath = 'C:\\claude_projects';
+    // Use environment variable, fallback to VPS path
+    this.baseProjectPath = process.env.CLAUDE_PROJECTS_PATH || '/root/apps/Projects';
   }
 
   /**

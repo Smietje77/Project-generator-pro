@@ -44,8 +44,9 @@ export const GET: APIRoute = async ({ url, cookies }) => {
       });
     }
 
-    // Build project path
-    const projectPath = path.join('C:', 'claude_projects', projectName);
+    // Build project path using environment variable
+    const basePath = process.env.CLAUDE_PROJECTS_PATH || '/root/apps/Projects';
+    const projectPath = path.join(basePath, projectName);
 
     // Check if project exists
     if (!fs.existsSync(projectPath)) {
