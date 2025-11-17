@@ -1,0 +1,385 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Button from '../components/ui/Button.astro';
+import Input from '../components/ui/Input.astro';
+import Alert from '../components/ui/Alert.astro';
+import Step1 from '../components/Step1.astro';
+import Step2 from '../components/Step2.astro';
+import Step3 from '../components/Step3.astro';
+import Step4 from '../components/Step4.astro';
+---
+
+<Layout title="Project Generator Pro - AI-Powered Project Scaffolding">
+  <div class="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+
+    <!-- Hero Section -->
+    <div id="hero-section" class="container mx-auto px-4 py-16">
+      <div class="max-w-4xl mx-auto text-center">
+        <h1 class="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+          Project Generator <span class="text-indigo-600">Pro</span>
+        </h1>
+        <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+          AI-powered project scaffolding tool that analyzes your requirements,
+          matches MCP servers, generates specialized AI agents, and creates
+          complete Claude Code prompts.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+          <Button variant="primary" size="lg" id="start-wizard-btn">
+            Get Started →
+          </Button>
+          <a href="https://github.com/Smietje77/project-generator-pro" target="_blank" class="text-gray-600 hover:text-gray-900 transition-colors">
+            View on GitHub
+          </a>
+        </div>
+
+        <!-- Features Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
+          {[
+            { icon: '🔍', title: 'Smart Analysis', description: 'Analyzes your project requirements intelligently' },
+            { icon: '🤖', title: 'AI Agents', description: 'Generates specialized agent teams' },
+            { icon: '⚡', title: 'MCP Integration', description: 'Matches optimal MCP servers' },
+            { icon: '🚀', title: 'Auto Deploy', description: 'Push to GitHub automatically' },
+          ].map((feature) => (
+            <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+              <div class="text-4xl mb-3">{feature.icon}</div>
+              <h3 class="font-semibold text-gray-900 mb-2">{feature.title}</h3>
+              <p class="text-sm text-gray-600">{feature.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <!-- Wizard Section -->
+    <div id="wizard-section" class="hidden container mx-auto px-4 py-8 max-w-4xl">
+
+      <!-- Progress Steps -->
+      <div class="mb-8">
+        <div class="flex items-center justify-between">
+          {[1, 2, 3, 4].map((step, index) => (
+            <div class="flex items-center flex-1">
+              <div class="flex flex-col items-center flex-1">
+                <div
+                  id={`progress-step-${step}`}
+                  class={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${
+                    step === 1
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-200 text-gray-600'
+                  }`}
+                >
+                  {step}
+                </div>
+                <span class="text-xs mt-2 text-gray-600 hidden sm:block">
+                  {step === 1 ? 'Basics' : step === 2 ? 'Features' : step === 3 ? 'Review' : 'Generate'}
+                </span>
+              </div>
+              {index < 3 && (
+                <div class="flex-1 h-1 bg-gray-200 mx-2">
+                  <div
+                    id={`progress-line-${step}`}
+                    class="h-full bg-indigo-600 transition-all duration-300"
+                    style="width: 0%"
+                  ></div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <!-- Step Content -->
+      <div id="step-1" class="wizard-step">
+        <Step1 />
+      </div>
+
+      <div id="step-2" class="wizard-step hidden">
+        <Step2 />
+      </div>
+
+      <div id="step-3" class="wizard-step hidden">
+        <Step3 />
+      </div>
+
+      <div id="step-4" class="wizard-step hidden">
+        <Step4 />
+      </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div
+      id="login-modal"
+      class="hidden fixed inset-0 z-50 overflow-y-auto"
+      x-data="{ open: false }"
+      x-show="open"
+      style="display: none;"
+    >
+      <!-- Backdrop -->
+      <div
+        x-show="open"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed inset-0 bg-gray-900 bg-opacity-75 backdrop-blur-sm"
+      ></div>
+
+      <!-- Modal Content -->
+      <div class="flex min-h-screen items-center justify-center p-4">
+        <div
+          x-show="open"
+          x-transition:enter="transition ease-out duration-300"
+          x-transition:enter-start="opacity-0 transform scale-95"
+          x-transition:enter-end="opacity-100 transform scale-100"
+          x-transition:leave="transition ease-in duration-200"
+          x-transition:leave-start="opacity-100 transform scale-100"
+          x-transition:leave-end="opacity-0 transform scale-95"
+          class="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6"
+        >
+          <h2 class="text-2xl font-bold text-gray-900 mb-4">Access Required</h2>
+          <p class="text-gray-600 mb-6">Enter your access code to continue</p>
+
+          <form id="login-form" class="space-y-4">
+            <Input
+              type="password"
+              name="accessCode"
+              label="Access Code"
+              placeholder="Enter access code..."
+              required
+            />
+
+            <div id="login-error" class="hidden">
+              <Alert type="error" message="Invalid access code. Please try again." dismissible />
+            </div>
+
+            <Button
+              type="submit"
+              variant="primary"
+              class="w-full"
+              id="login-btn"
+            >
+              Continue
+            </Button>
+          </form>
+
+          <p class="text-sm text-gray-500 mt-4 text-center">
+            Don't have access? Contact the administrator.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import Alpine from 'alpinejs';
+
+  // Initialize Alpine.js
+  if (typeof window !== 'undefined') {
+    window.Alpine = Alpine;
+    Alpine.start();
+  }
+
+  // State management
+  let currentStep = 1;
+  let isAuthenticated = false;
+
+  // Check authentication on load
+  async function checkAuth() {
+    try {
+      const response = await fetch('/api/auth/verify');
+      const data = await response.json();
+      isAuthenticated = data.authenticated;
+
+      if (isAuthenticated) {
+        showWizard();
+      } else {
+        showLoginModal();
+      }
+    } catch (err) {
+      console.error('Auth check failed:', err);
+      showLoginModal();
+    }
+  }
+
+  // Show login modal
+  function showLoginModal() {
+    const modal = document.getElementById('login-modal');
+    const hero = document.getElementById('hero-section');
+
+    if (modal && hero) {
+      modal.classList.remove('hidden');
+      hero.classList.add('opacity-50', 'pointer-events-none');
+
+      // Trigger Alpine to open
+      setTimeout(() => {
+        const alpineData = Alpine.$data(modal);
+        if (alpineData) alpineData.open = true;
+      }, 100);
+    }
+  }
+
+  // Show wizard
+  function showWizard() {
+    const hero = document.getElementById('hero-section');
+    const wizard = document.getElementById('wizard-section');
+    const modal = document.getElementById('login-modal');
+
+    if (hero) hero.classList.add('hidden');
+    if (wizard) wizard.classList.remove('hidden');
+    if (modal) {
+      modal.classList.add('hidden');
+      const alpineData = Alpine.$data(modal);
+      if (alpineData) alpineData.open = false;
+    }
+  }
+
+  // Update progress UI
+  function updateProgress(step: number) {
+    // Update step circles
+    for (let i = 1; i <= 4; i++) {
+      const stepEl = document.getElementById(`progress-step-${i}`);
+      if (stepEl) {
+        if (i < step) {
+          stepEl.className = 'w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all bg-green-500 text-white';
+          stepEl.textContent = '✓';
+        } else if (i === step) {
+          stepEl.className = 'w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all bg-indigo-600 text-white';
+          stepEl.textContent = i.toString();
+        } else {
+          stepEl.className = 'w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all bg-gray-200 text-gray-600';
+          stepEl.textContent = i.toString();
+        }
+      }
+
+      // Update progress lines
+      if (i < 4) {
+        const lineEl = document.getElementById(`progress-line-${i}`);
+        if (lineEl) {
+          lineEl.style.width = i < step ? '100%' : '0%';
+        }
+      }
+    }
+  }
+
+  // Navigate to step
+  function goToStep(step: number) {
+    // Hide all steps
+    for (let i = 1; i <= 4; i++) {
+      const stepEl = document.getElementById(`step-${i}`);
+      if (stepEl) {
+        stepEl.classList.add('hidden');
+      }
+    }
+
+    // Show current step
+    const currentStepEl = document.getElementById(`step-${step}`);
+    if (currentStepEl) {
+      currentStepEl.classList.remove('hidden');
+    }
+
+    currentStep = step;
+    updateProgress(step);
+
+    // Dispatch event for step activation
+    window.dispatchEvent(new CustomEvent(`step:${step}:active`));
+
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Event listeners
+  document.addEventListener('DOMContentLoaded', () => {
+    // Check auth on load
+    checkAuth();
+
+    // Start wizard button
+    const startBtn = document.getElementById('start-wizard-btn');
+    if (startBtn) {
+      startBtn.addEventListener('click', () => {
+        if (!isAuthenticated) {
+          showLoginModal();
+        } else {
+          showWizard();
+        }
+      });
+    }
+
+    // Login form
+    const loginForm = document.getElementById('login-form');
+    const loginBtn = document.getElementById('login-btn');
+    const loginError = document.getElementById('login-error');
+
+    if (loginForm) {
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(loginForm as HTMLFormElement);
+        const code = formData.get('accessCode') as string;
+
+        try {
+          loginBtn?.setAttribute('disabled', 'true');
+          if (loginBtn) loginBtn.innerHTML = 'Verifying...';
+
+          const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ code }),
+            credentials: 'same-origin'
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            isAuthenticated = true;
+            loginError?.classList.add('hidden');
+            showWizard();
+          } else {
+            loginError?.classList.remove('hidden');
+            loginBtn?.removeAttribute('disabled');
+            if (loginBtn) loginBtn.innerHTML = 'Continue';
+          }
+        } catch (err) {
+          console.error('Login error:', err);
+          loginError?.classList.remove('hidden');
+          loginBtn?.removeAttribute('disabled');
+          if (loginBtn) loginBtn.innerHTML = 'Continue';
+        }
+      });
+    }
+
+    // Wizard navigation events
+    window.addEventListener('wizard:next', () => {
+      if (currentStep < 4) {
+        goToStep(currentStep + 1);
+      }
+    });
+
+    window.addEventListener('wizard:previous', () => {
+      if (currentStep > 1) {
+        goToStep(currentStep - 1);
+      }
+    });
+  });
+</script>
+
+<style>
+  .wizard-step {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>

@@ -1,0 +1,114 @@
+---
+import Card from './ui/Card.astro';
+import Input from './ui/Input.astro';
+import Textarea from './ui/Textarea.astro';
+import Button from './ui/Button.astro';
+
+const projectTypes = [
+  { value: 'saas', label: 'SaaS Application', icon: '🚀' },
+  { value: 'website', label: 'Website', icon: '🌐' },
+  { value: 'api', label: 'API/Backend', icon: '⚡' },
+  { value: 'mobile-app', label: 'Mobile App', icon: '📱' },
+  { value: 'desktop-app', label: 'Desktop App', icon: '💻' },
+  { value: 'cli-tool', label: 'CLI Tool', icon: '⌨️' },
+  { value: 'library', label: 'Library/Package', icon: '📦' },
+  { value: 'other', label: 'Other', icon: '✨' },
+];
+---
+
+<Card title="Step 1: Project Basics" description="Tell us about your project">
+  <form id="step1-form" class="space-y-6">
+    <Input
+      name="projectName"
+      label="Project Name"
+      placeholder="my-awesome-saas"
+      required
+    />
+
+    <Textarea
+      name="description"
+      label="Project Description"
+      placeholder="Describe what your project does, its main features, and target audience..."
+      required
+      rows={6}
+    />
+
+    <div class="space-y-2">
+      <label class="block text-sm font-medium text-gray-700">
+        Project Type <span class="text-red-500">*</span>
+      </label>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {projectTypes.map((type) => (
+          <label class="relative">
+            <input
+              type="radio"
+              name="projectType"
+              value={type.value}
+              required
+              class="peer sr-only"
+            />
+            <div class="cursor-pointer border-2 border-gray-200 rounded-lg p-4 text-center transition-all peer-checked:border-indigo-600 peer-checked:bg-indigo-50 hover:border-indigo-300">
+              <div class="text-3xl mb-2">{type.icon}</div>
+              <div class="text-sm font-medium text-gray-900">{type.label}</div>
+            </div>
+          </label>
+        ))}
+      </div>
+    </div>
+
+    <div class="flex justify-end pt-6">
+      <Button type="submit" variant="primary">
+        Next Step →
+      </Button>
+    </div>
+  </form>
+</Card>
+
+<script>
+  // Form validation and navigation
+  const form = document.getElementById('step1-form') as HTMLFormElement;
+
+  if (form) {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      // Get form data
+      const formData = new FormData(form);
+      const projectName = formData.get('projectName');
+      const description = formData.get('description');
+      const projectType = formData.get('projectType');
+
+      // Store in sessionStorage for next steps
+      sessionStorage.setItem('step1Data', JSON.stringify({
+        projectName,
+        description,
+        projectType
+      }));
+
+      // Dispatch event to parent to move to next step
+      window.dispatchEvent(new CustomEvent('wizard:next'));
+    });
+
+    // Load saved data if exists
+    const savedData = sessionStorage.getItem('step1Data');
+    if (savedData) {
+      try {
+        const data = JSON.parse(savedData);
+
+        // Restore input fields
+        if (data.projectName) {
+          (form.querySelector('input[name="projectName"]') as HTMLInputElement).value = data.projectName;
+        }
+        if (data.description) {
+          (form.querySelector('textarea[name="description"]') as HTMLTextAreaElement).value = data.description;
+        }
+        if (data.projectType) {
+          const radio = form.querySelector(`input[name="projectType"][value="${data.projectType}"]`) as HTMLInputElement;
+          if (radio) radio.checked = true;
+        }
+      } catch (error) {
+        console.error('Error loading saved data:', error);
+      }
+    }
+  }
+</script>

@@ -1,0 +1,55 @@
+{
+  "mcpServers": [
+    {
+      "id": "desktop-commander",
+      "name": "Desktop Commander",
+      "required": true,
+      "enabled": true,
+      "description": "File operations, terminal, process management",
+      "criticalFor": [
+        "Creating project files in C:\\claude_projects",
+        "Writing agent definitions",
+        "Generating project structure",
+        "Running git commands"
+      ]
+    },
+    {
+      "id": "github",
+      "name": "GitHub MCP",
+      "required": true,
+      "enabled": true,
+      "description": "GitHub repository management",
+      "criticalFor": [
+        "Creating repositories for generated projects",
+        "Pushing initial commits",
+        "Managing branches"
+      ]
+    },
+    {
+      "id": "context7",
+      "name": "Context7 MCP",
+      "required": false,
+      "enabled": true,
+      "description": "Documentation and library lookup",
+      "criticalFor": [
+        "Finding best practices",
+        "Looking up library documentation",
+        "Technology research"
+      ]
+    },
+    {
+      "id": "chrome-devtools",
+      "name": "Chrome DevTools MCP",
+      "required": false,
+      "enabled": true,
+      "description": "Browser automation and testing",
+      "criticalFor": [
+        "Testing UI in browser",
+        "Debugging frontend issues",
+        "Visual verification"
+      ]
+    }
+  ],
+  "generatedAt": "2025-11-15T00:00:00.000Z",
+  "projectVersion": "1.0.0"
+}

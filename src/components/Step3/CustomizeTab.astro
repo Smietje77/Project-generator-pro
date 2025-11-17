@@ -1,0 +1,596 @@
+---
+import Button from '../ui/Button.astro';
+---
+
+<div x-show="activeTab === 'customize'" x-cloak class="space-y-6">
+  <!-- Editable Project Summary -->
+  <div class="bg-white border-2 border-gray-200 rounded-lg p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+        <span class="text-xl">✏️</span>
+        Project Information
+      </h3>
+      <button
+        type="button"
+        id="edit-project-info-btn"
+        class="text-sm text-primary-600 hover:text-primary-700 font-medium"
+      >
+        Edit
+      </button>
+    </div>
+
+    <!-- View Mode -->
+    <div id="project-info-view" class="space-y-3">
+      <div>
+        <label class="text-sm font-medium text-gray-700">Project Name</label>
+        <div id="view-project-name" class="text-gray-900 font-semibold">-</div>
+      </div>
+      <div>
+        <label class="text-sm font-medium text-gray-700">Description</label>
+        <div id="view-project-description" class="text-gray-700">-</div>
+      </div>
+      <div class="grid grid-cols-3 gap-4">
+        <div>
+          <label class="text-sm font-medium text-gray-700">Type</label>
+          <div id="view-project-type" class="text-gray-900">-</div>
+        </div>
+        <div>
+          <label class="text-sm font-medium text-gray-700">Frontend</label>
+          <div id="view-frontend" class="text-gray-900">-</div>
+        </div>
+        <div>
+          <label class="text-sm font-medium text-gray-700">Backend</label>
+          <div id="view-backend" class="text-gray-900">-</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Mode (hidden initially) -->
+    <div id="project-info-edit" class="hidden space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Project Name</label>
+        <input
+          type="text"
+          id="edit-project-name"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+        />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+        <textarea
+          id="edit-project-description"
+          rows="3"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+        ></textarea>
+      </div>
+      <div class="grid grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+          <select
+            id="edit-project-type"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          >
+            <option value="saas">SaaS</option>
+            <option value="website">Website</option>
+            <option value="api">API</option>
+            <option value="mobile-app">Mobile App</option>
+            <option value="cli-tool">CLI Tool</option>
+            <option value="automation-script">Automation</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Frontend</label>
+          <select
+            id="edit-frontend"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          >
+            <option value="react">React</option>
+            <option value="vue">Vue.js</option>
+            <option value="astro">Astro</option>
+            <option value="svelte">Svelte</option>
+            <option value="next">Next.js</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Backend</label>
+          <select
+            id="edit-backend"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          >
+            <option value="node">Node.js</option>
+            <option value="bun">Bun</option>
+            <option value="python">Python</option>
+            <option value="go">Go</option>
+            <option value="none">None</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex gap-2 justify-end">
+        <button
+          type="button"
+          id="cancel-edit-btn"
+          class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          id="save-edit-btn"
+          class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+        >
+          Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Features Selection -->
+  <div class="bg-white border-2 border-gray-200 rounded-lg p-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+      <span class="text-xl">🎯</span>
+      Project Features
+    </h3>
+    <div id="features-list" class="grid grid-cols-2 md:grid-cols-3 gap-3">
+      <!-- Will be populated dynamically -->
+    </div>
+  </div>
+
+  <!-- MCP Configuration -->
+  <div class="bg-white border-2 border-gray-200 rounded-lg p-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+      <span class="text-xl">🔧</span>
+      MCP Servers
+    </h3>
+    <div id="mcp-toggles" class="space-y-3">
+      <!-- Will be populated dynamically -->
+    </div>
+  </div>
+
+  <!-- Re-analyze Section -->
+  <div class="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6">
+    <div class="flex items-start gap-4">
+      <span class="text-3xl">💡</span>
+      <div class="flex-1">
+        <h4 class="font-semibold text-yellow-900 mb-2">Made changes?</h4>
+        <p class="text-sm text-yellow-800 mb-4">
+          If you've modified the project information or features, click below to re-analyze and update the recommendations.
+        </p>
+        <Button
+          type="button"
+          variant="primary"
+          id="reanalyze-btn"
+        >
+          🔄 Re-analyze Project
+        </Button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Advanced Options (Collapsible) -->
+  <details class="bg-white border-2 border-gray-200 rounded-lg p-6">
+    <summary class="cursor-pointer font-semibold text-gray-900 flex items-center gap-2">
+      <span class="text-xl">⚙️</span>
+      Advanced Options
+    </summary>
+    <div class="mt-4 space-y-4">
+      <!-- Complexity Override -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Project Complexity</label>
+        <select
+          id="edit-complexity"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+        >
+          <option value="simple">🟢 Simple - Small projects, POCs (5-6 agents)</option>
+          <option value="moderate">🟡 Moderate - Standard web apps (7-8 agents)</option>
+          <option value="complex">🟠 Complex - Enterprise apps (8-9 agents)</option>
+          <option value="enterprise">🔴 Enterprise - Large systems (9+ agents)</option>
+        </select>
+        <p class="text-xs text-gray-500 italic mt-1">
+          💡 Complexity determines the number of AI agents and depth of analysis.
+        </p>
+      </div>
+
+      <!-- Team Size -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Team Size (AI Agents)</label>
+        <input
+          type="number"
+          id="edit-team-size"
+          min="1"
+          max="20"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+        />
+      </div>
+
+      <!-- Custom Instructions -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Custom Instructions</label>
+        <textarea
+          id="custom-instructions"
+          rows="4"
+          placeholder="Any special requirements or instructions for the AI agents..."
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+        ></textarea>
+      </div>
+    </div>
+  </details>
+</div>
+
+<style>
+  [x-cloak] {
+    display: none !important;
+  }
+</style>
+
+<script>
+  import { showError, showSuccess, showInfo } from '../../lib/notifications';
+
+  // Customize tab functionality
+  let originalConfig: any = null;
+
+  // Generate file structure for preview (same as in Step3.astro)
+  function generateFileStructure(config: any, analysis: any): any[] {
+    const sanitizedName = (config.name || 'project')
+      .toLowerCase()
+      .replace(/[^a-z0-9-\s]/g, '')
+      .replace(/\s+/g, '-');
+
+    return [
+      {
+        name: '.claude',
+        type: 'folder',
+        description: 'Claude Code configuration',
+        children: [
+          {
+            name: 'PROJECT_PROMPT.md',
+            type: 'file',
+            description: 'Main project prompt',
+            content: '# Generated project prompt will be here...'
+          },
+          {
+            name: 'mcp-config.json',
+            type: 'file',
+            description: 'MCP server configuration',
+            content: JSON.stringify({
+              mcpServers: analysis.recommendedMCPs || []
+            }, null, 2)
+          },
+          {
+            name: 'agents',
+            type: 'folder',
+            description: 'AI agent definitions',
+            children: (analysis.requiredAgents || []).map((agent: any) => ({
+              name: `${agent.id}.md`,
+              type: 'file',
+              description: agent.role,
+              content: `# ${agent.name}\n\n**Role:** ${agent.role}\n\n## Responsibilities\n\n${agent.responsibilities?.map((r: string) => `- ${r}`).join('\n') || ''}`
+            }))
+          }
+        ]
+      },
+      {
+        name: 'src',
+        type: 'folder',
+        description: 'Source code',
+        children: [
+          {
+            name: 'index.js',
+            type: 'file',
+            description: 'Main entry point',
+            content: `// ${config.name}\nconsole.log('Hello World!');`
+          }
+        ]
+      },
+      {
+        name: 'docs',
+        type: 'folder',
+        description: 'Documentation'
+      },
+      {
+        name: 'tests',
+        type: 'folder',
+        description: 'Test files'
+      },
+      {
+        name: 'README.md',
+        type: 'file',
+        description: 'Project overview',
+        content: `# ${config.name}\n\n${config.description}\n\n## Getting Started\n\nOpen in Claude Code and let the AI agents build your project!`
+      },
+      {
+        name: 'package.json',
+        type: 'file',
+        description: 'NPM configuration',
+        content: JSON.stringify({
+          name: sanitizedName,
+          version: '0.1.0',
+          description: config.description,
+          type: 'module'
+        }, null, 2)
+      },
+      {
+        name: '.gitignore',
+        type: 'file',
+        description: 'Git ignore rules',
+        content: 'node_modules/\n.env\ndist/\n*.log'
+      },
+      {
+        name: '.env.example',
+        type: 'file',
+        description: 'Environment variables template',
+        content: '# Environment Variables\nNODE_ENV=development'
+      }
+    ];
+  }
+
+  // Toggle edit mode
+  document.getElementById('edit-project-info-btn')?.addEventListener('click', () => {
+    document.getElementById('project-info-view')?.classList.add('hidden');
+    document.getElementById('project-info-edit')?.classList.remove('hidden');
+  });
+
+  document.getElementById('cancel-edit-btn')?.addEventListener('click', () => {
+    document.getElementById('project-info-view')?.classList.remove('hidden');
+    document.getElementById('project-info-edit')?.classList.add('hidden');
+  });
+
+  document.getElementById('save-edit-btn')?.addEventListener('click', () => {
+    // Get edited values
+    const name = (document.getElementById('edit-project-name') as HTMLInputElement).value;
+    const description = (document.getElementById('edit-project-description') as HTMLTextAreaElement).value;
+    const type = (document.getElementById('edit-project-type') as HTMLSelectElement).value;
+    const frontend = (document.getElementById('edit-frontend') as HTMLSelectElement).value;
+    const backend = (document.getElementById('edit-backend') as HTMLSelectElement).value;
+
+    // Update view
+    document.getElementById('view-project-name')!.textContent = name;
+    document.getElementById('view-project-description')!.textContent = description;
+    document.getElementById('view-project-type')!.textContent = type;
+    document.getElementById('view-frontend')!.textContent = frontend;
+    document.getElementById('view-backend')!.textContent = backend;
+
+    // Update session storage
+    const step1Data = JSON.parse(sessionStorage.getItem('step1Data') || '{}');
+    step1Data.projectName = name;
+    step1Data.description = description;
+    step1Data.projectType = type;
+    sessionStorage.setItem('step1Data', JSON.stringify(step1Data));
+
+    const step2Data = JSON.parse(sessionStorage.getItem('step2Data') || '{}');
+    step2Data.techStack = { ...step2Data.techStack, frontend, backend };
+    sessionStorage.setItem('step2Data', JSON.stringify(step2Data));
+
+    // Hide edit mode
+    document.getElementById('project-info-view')?.classList.remove('hidden');
+    document.getElementById('project-info-edit')?.classList.add('hidden');
+
+    // Show success message
+    showSuccess('Changes saved! Click "Re-analyze Project" to update recommendations.');
+  });
+
+  // Re-analyze button
+  document.getElementById('reanalyze-btn')?.addEventListener('click', async () => {
+    const btn = document.getElementById('reanalyze-btn');
+    if (!btn) return;
+
+    try {
+      btn.setAttribute('disabled', 'true');
+      btn.textContent = '🔄 Analyzing...';
+
+      // Get updated data
+      const step1Data = JSON.parse(sessionStorage.getItem('step1Data') || '{}');
+      const step2Data = JSON.parse(sessionStorage.getItem('step2Data') || '{}');
+
+      // Call analyze API
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectName: step1Data.projectName,
+          description: step1Data.description,
+          projectType: step1Data.projectType,
+          features: step2Data.features || [],
+          techStack: step2Data.techStack || {},
+          estimatedComplexity: step2Data.estimatedComplexity || 'moderate',
+          additionalRequirements: step2Data.additionalRequirements
+        })
+      });
+
+      if (!response.ok) throw new Error('Re-analysis failed');
+
+      const result = await response.json();
+
+      // Update analysis data
+      sessionStorage.setItem('analysisData', JSON.stringify(result.analysis));
+
+      // Trigger re-render of all tabs
+      const config = {
+        name: step1Data.projectName,
+        description: step1Data.description,
+        type: step1Data.projectType,
+        features: step2Data.features,
+        techStack: {
+          frontend: step2Data.techStack?.frontend ? [step2Data.techStack.frontend] : [],
+          backend: step2Data.techStack?.backend ? [step2Data.techStack.backend] : [],
+          database: step2Data.techStack?.database ? [step2Data.techStack.database] : []
+        },
+        metadata: {}
+      };
+
+      // Add project config to analysis data for PromptGenerator
+      result.analysis.project = config;
+
+      // Import PromptGenerator dynamically to regenerate prompt
+      const { PromptGenerator } = await import('../../lib/promptGenerator');
+      const promptGenerator = new PromptGenerator();
+      const generatedPrompt = promptGenerator.generate(result.analysis);
+
+      // Generate file structure
+      const fileStructure = generateFileStructure(config, result.analysis);
+
+      // Dispatch all events to update all tabs
+      window.dispatchEvent(new CustomEvent('step3:analysis-ready', {
+        detail: { analysis: result.analysis, config }
+      }));
+
+      window.dispatchEvent(new CustomEvent('step3:prompt-ready', {
+        detail: { prompt: generatedPrompt.markdown, analysis: result.analysis }
+      }));
+
+      window.dispatchEvent(new CustomEvent('step3:files-ready', {
+        detail: { fileStructure: fileStructure, projectName: config.name }
+      }));
+
+      btn.textContent = '✓ Re-analyzed!';
+      setTimeout(() => {
+        btn.textContent = '🔄 Re-analyze Project';
+        btn.removeAttribute('disabled');
+      }, 2000);
+
+    } catch (error) {
+      console.error('Re-analysis error:', error);
+      showError('Failed to re-analyze project. Please try again.');
+      btn!.textContent = '🔄 Re-analyze Project';
+      btn?.removeAttribute('disabled');
+    }
+  });
+
+  // Load customize tab data
+  window.addEventListener('step3:analysis-ready', ((event: CustomEvent) => {
+    const { analysis, config } = event.detail;
+    originalConfig = { ...config };
+
+    // Populate project info view
+    document.getElementById('view-project-name')!.textContent = config.name || '-';
+    document.getElementById('view-project-description')!.textContent = config.description || '-';
+    document.getElementById('view-project-type')!.textContent = config.type || '-';
+    document.getElementById('view-frontend')!.textContent = config.techStack?.frontend?.[0] || '-';
+    document.getElementById('view-backend')!.textContent = config.techStack?.backend?.[0] || '-';
+
+    // Populate edit form
+    (document.getElementById('edit-project-name') as HTMLInputElement).value = config.name || '';
+    (document.getElementById('edit-project-description') as HTMLTextAreaElement).value = config.description || '';
+    (document.getElementById('edit-project-type') as HTMLSelectElement).value = config.type || 'saas';
+    (document.getElementById('edit-frontend') as HTMLSelectElement).value = config.techStack?.frontend?.[0] || 'react';
+    (document.getElementById('edit-backend') as HTMLSelectElement).value = config.techStack?.backend?.[0] || 'node';
+
+    // Populate features
+    const featuresList = document.getElementById('features-list');
+    const allFeatures = [
+      { id: 'auth', label: 'Authentication', icon: '🔐' },
+      { id: 'database', label: 'Database', icon: '🗄️' },
+      { id: 'api', label: 'API Routes', icon: '⚡' },
+      { id: 'upload', label: 'File Upload', icon: '📁' },
+      { id: 'email', label: 'Email Service', icon: '📧' },
+      { id: 'payment', label: 'Payment', icon: '💳' },
+      { id: 'analytics', label: 'Analytics', icon: '📊' },
+      { id: 'testing', label: 'Testing', icon: '🧪' }
+    ];
+
+    if (featuresList) {
+      featuresList.innerHTML = allFeatures.map(feature => {
+        const isSelected = config.features?.some((f: any) => f.id === feature.id || f === feature.id);
+        return `
+          <label class="flex items-center gap-2 p-3 border-2 rounded-lg cursor-pointer ${isSelected ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-gray-300'}">
+            <input
+              type="checkbox"
+              value="${feature.id}"
+              ${isSelected ? 'checked' : ''}
+              class="h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+            />
+            <span class="text-lg">${feature.icon}</span>
+            <span class="text-sm font-medium text-gray-900">${feature.label}</span>
+          </label>
+        `;
+      }).join('');
+    }
+
+    // Populate MCP toggles
+    const mcpToggles = document.getElementById('mcp-toggles');
+    if (mcpToggles && analysis.recommendedMCPs) {
+      mcpToggles.innerHTML = analysis.recommendedMCPs.map((mcp: any) => `
+        <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+          <input
+            type="checkbox"
+            ${mcp.required ? 'checked disabled' : 'checked'}
+            value="${mcp.id}"
+            data-mcp="${mcp.id}"
+            class="h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+          />
+          <div class="flex-1">
+            <div class="font-medium text-gray-900">${mcp.name}</div>
+            <div class="text-sm text-gray-500">${mcp.description || ''}</div>
+          </div>
+          ${mcp.required ? '<span class="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">Required</span>' : ''}
+        </label>
+      `).join('');
+    }
+
+    // Populate advanced options
+    (document.getElementById('edit-complexity') as HTMLSelectElement).value = config.metadata?.estimatedComplexity || 'moderate';
+    (document.getElementById('edit-team-size') as HTMLInputElement).value = config.metadata?.teamSize || analysis.requiredAgents?.length || '3';
+
+    // Load custom instructions from sessionStorage
+    const step2Data = JSON.parse(sessionStorage.getItem('step2Data') || '{}');
+    if (step2Data.customInstructions) {
+      (document.getElementById('custom-instructions') as HTMLTextAreaElement).value = step2Data.customInstructions;
+    }
+
+  }) as EventListener);
+
+  // Advanced options event listeners
+  document.getElementById('edit-complexity')?.addEventListener('change', (e) => {
+    const complexity = (e.target as HTMLSelectElement).value;
+    console.log('[CustomizeTab] Complexity changed to:', complexity);
+
+    // Update sessionStorage
+    const step2Data = JSON.parse(sessionStorage.getItem('step2Data') || '{}');
+    step2Data.estimatedComplexity = complexity;
+    sessionStorage.setItem('step2Data', JSON.stringify(step2Data));
+
+    // Show notification
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+    notification.textContent = `✓ Complexity updated to ${complexity}. Click "Re-analyze Project" to apply changes.`;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+  });
+
+  document.getElementById('edit-team-size')?.addEventListener('change', (e) => {
+    const teamSize = parseInt((e.target as HTMLInputElement).value);
+    console.log('[CustomizeTab] Team size changed to:', teamSize);
+
+    // Update sessionStorage - store in analysisData metadata
+    const analysisData = JSON.parse(sessionStorage.getItem('analysisData') || '{}');
+    if (analysisData.project && analysisData.project.metadata) {
+      analysisData.project.metadata.teamSize = teamSize;
+      sessionStorage.setItem('analysisData', JSON.stringify(analysisData));
+    }
+
+    // Show notification
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+    notification.textContent = `✓ Team size updated to ${teamSize} agents.`;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+  });
+
+  document.getElementById('custom-instructions')?.addEventListener('blur', (e) => {
+    const instructions = (e.target as HTMLTextAreaElement).value;
+    console.log('[CustomizeTab] Custom instructions updated');
+
+    // Update sessionStorage
+    const step2Data = JSON.parse(sessionStorage.getItem('step2Data') || '{}');
+    step2Data.customInstructions = instructions;
+    sessionStorage.setItem('step2Data', JSON.stringify(step2Data));
+
+    if (instructions.trim()) {
+      // Show notification
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+      notification.textContent = '✓ Custom instructions saved.';
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 3000);
+    }
+  });
+</script>

@@ -1,0 +1,295 @@
+---
+import Card from './ui/Card.astro';
+import Button from './ui/Button.astro';
+import Spinner from './ui/Spinner.astro';
+import Alert from './ui/Alert.astro';
+import TabNavigation from './Step3/TabNavigation.astro';
+import OverviewTab from './Step3/OverviewTab.astro';
+import PromptPreviewTab from './Step3/PromptPreviewTab.astro';
+import CustomizeTab from './Step3/CustomizeTab.astro';
+import FilesPreviewTab from './Step3/FilesPreviewTab.astro';
+---
+
+<Card title="Step 3: Review & Customize" description="Review analysis, preview files, and customize your project">
+  <div id="step3-content" class="space-y-6" x-data="{ activeTab: 'overview' }">
+
+    <!-- Loading State -->
+    <div id="analysis-loading" class="flex flex-col items-center justify-center py-12">
+      <Spinner size="lg" />
+      <p class="mt-4 text-gray-600">Analyzing your project requirements...</p>
+    </div>
+
+    <!-- Analysis Results with Tabs -->
+    <div id="analysis-results" class="hidden">
+
+      <!-- Tab Navigation -->
+      <TabNavigation />
+
+      <!-- Tab Contents -->
+      <div class="tab-content-wrapper">
+        <OverviewTab />
+        <PromptPreviewTab />
+        <CustomizeTab />
+        <FilesPreviewTab />
+      </div>
+
+      <!-- Navigation Buttons -->
+      <div class="flex justify-between pt-6 border-t border-gray-200 mt-6">
+        <Button
+          type="button"
+          variant="secondary"
+          id="step3-previous-results"
+        >
+          ← Previous
+        </Button>
+
+        <Button
+          type="button"
+          variant="primary"
+          id="step3-generate"
+        >
+          Generate Project →
+        </Button>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div id="analysis-error" class="hidden">
+      <Alert type="error" message="Failed to analyze project. Please try again." />
+      <div class="mt-4">
+        <Button
+          type="button"
+          variant="primary"
+          id="retry-analyze-btn"
+        >
+          Retry Analysis
+        </Button>
+      </div>
+    </div>
+
+    <!-- Navigation Button for Loading State -->
+    <div id="step3-nav-loading" class="flex justify-start pt-6">
+      <Button
+        type="button"
+        variant="secondary"
+        id="step3-previous"
+      >
+        ← Previous
+      </Button>
+    </div>
+  </div>
+</Card>
+
+<script>
+  import { PromptGenerator } from '../lib/promptGenerator';
+  import type { AnalysisResult } from '../lib/types';
+  import { FEATURE_DEFINITIONS } from '../lib/featureMapping';
+  import { generateFileStructure } from '../lib/fileStructureGenerator';
+
+  // Analysis and generation logic
+  document.addEventListener('DOMContentLoaded', () => {
+    const loading = document.getElementById('analysis-loading');
+    const results = document.getElementById('analysis-results');
+    const error = document.getElementById('analysis-error');
+    const navLoading = document.getElementById('step3-nav-loading');
+    const generateBtn = document.getElementById('step3-generate');
+    const previousBtn = document.getElementById('step3-previous');
+    const previousResultsBtn = document.getElementById('step3-previous-results');
+    const retryBtn = document.getElementById('retry-analyze-btn');
+
+    let analysisData: any = null;
+    let projectConfig: any = null;
+
+    // Function to analyze project
+    async function analyzeProject() {
+      try {
+        console.log('[Step3] Starting analysis...');
+
+        // Get data from previous steps
+        const step1Data = JSON.parse(sessionStorage.getItem('step1Data') || '{}');
+        const step2Data = JSON.parse(sessionStorage.getItem('step2Data') || '{}');
+
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            projectName: step1Data.projectName,
+            description: step1Data.description,
+            projectType: step1Data.projectType,
+            features: step2Data.features || [],
+            techStack: step2Data.techStack || {},
+            additionalRequirements: step2Data.additionalRequirements,
+            estimatedComplexity: step2Data.estimatedComplexity || 'moderate',
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Analysis failed');
+        }
+
+        const data = await response.json();
+        analysisData = data.analysis;
+
+        console.log('[Step3] Analysis complete:', analysisData);
+
+        // Build project config for events using centralized feature definitions
+        projectConfig = {
+          name: step1Data.projectName,
+          description: step1Data.description,
+          type: step1Data.projectType,
+          features: (step2Data.features || []).map((id: string) => {
+            const definition = FEATURE_DEFINITIONS[id];
+            return {
+              id,
+              name: definition?.name || id,
+              category: definition?.category || 'automation',
+              required: true
+            };
+          }),
+          techStack: {
+            frontend: step2Data.techStack?.frontend ? [step2Data.techStack.frontend] : [],
+            backend: step2Data.techStack?.backend ? [step2Data.techStack.backend] : [],
+            database: step2Data.techStack?.database ? [step2Data.techStack.database] : []
+          },
+          metadata: {
+            createdAt: new Date(),
+            estimatedComplexity: step2Data.estimatedComplexity || 'moderate',
+            estimatedDuration: '2-4 weeks',
+            teamSize: analysisData.requiredAgents?.length || 3
+          }
+        };
+
+        // Add project config to analysis data for PromptGenerator
+        analysisData.project = projectConfig;
+
+        // Generate full PROJECT_PROMPT.md content
+        const promptGenerator = new PromptGenerator();
+        const generatedPrompt = promptGenerator.generate(analysisData as AnalysisResult);
+
+        console.log('[Step3] Prompt generated');
+
+        // Generate file structure preview using centralized generator
+        const fileStructure = generateFileStructure(projectConfig, analysisData);
+
+        console.log('[Step3] File structure generated');
+
+        // Display results in tabs
+        displayAnalysisResults(analysisData, projectConfig, generatedPrompt.markdown, fileStructure);
+
+        // Hide loading, show results
+        loading?.classList.add('hidden');
+        navLoading?.classList.add('hidden');
+        results?.classList.remove('hidden');
+
+        // Store analysis data
+        sessionStorage.setItem('analysisData', JSON.stringify(analysisData));
+
+        console.log('[Step3] UI updated, analysis complete!');
+
+      } catch (err) {
+        console.error('[Step3] Analysis error:', err);
+        loading?.classList.add('hidden');
+        navLoading?.classList.add('hidden');
+        error?.classList.remove('hidden');
+      }
+    }
+
+    // Function to display analysis results across all tabs
+    function displayAnalysisResults(analysis: any, config: any, prompt: string, files: any[]) {
+      // Dispatch events for each tab
+
+      // Overview tab
+      window.dispatchEvent(new CustomEvent('step3:analysis-ready', {
+        detail: { analysis, config }
+      }));
+
+      // Prompt preview tab
+      window.dispatchEvent(new CustomEvent('step3:prompt-ready', {
+        detail: { prompt, analysis }
+      }));
+
+      // Files preview tab
+      window.dispatchEvent(new CustomEvent('step3:files-ready', {
+        detail: { fileStructure: files, projectName: config.name }
+      }));
+    }
+
+    // Duplicate generateFileStructure function removed - using centralized version from fileStructureGenerator.ts
+
+    // Previous buttons
+    previousBtn?.addEventListener('click', () => {
+      window.dispatchEvent(new CustomEvent('wizard:previous'));
+    });
+
+    previousResultsBtn?.addEventListener('click', () => {
+      window.dispatchEvent(new CustomEvent('wizard:previous'));
+    });
+
+    // Retry button
+    retryBtn?.addEventListener('click', () => {
+      error?.classList.add('hidden');
+      loading?.classList.remove('hidden');
+      analyzeProject();
+    });
+
+    // Generate button - using event delegation
+    document.addEventListener('click', async (e) => {
+      const target = e.target as HTMLElement;
+
+      if (target.id === 'step3-generate' || target.closest('#step3-generate')) {
+        console.log('[Step3] Generate button clicked!');
+        e.preventDefault();
+        e.stopPropagation();
+
+        const btn = document.getElementById('step3-generate') as HTMLButtonElement;
+        if (!btn || btn.hasAttribute('disabled')) {
+          console.log('[Step3] Button is disabled, ignoring click');
+          return;
+        }
+
+        try {
+          console.log('[Step3] Processing generate...');
+          btn.setAttribute('disabled', 'true');
+          btn.innerHTML = '<span class="inline-flex items-center gap-2"><svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><circle class="opacity-75" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" stroke-dasharray="32" stroke-dashoffset="16"></circle></svg>Generating...</span>';
+
+          // Get selected optional MCPs
+          const optionalMcps = Array.from(document.querySelectorAll('input[name="optional-mcp"]:checked, input[data-mcp]:checked'))
+            .map((checkbox: any) => checkbox.value || checkbox.getAttribute('data-mcp'));
+
+          console.log('[Step3] Selected MCPs:', optionalMcps);
+
+          // Store customizations
+          sessionStorage.setItem('step3Customizations', JSON.stringify({
+            optionalMcps
+          }));
+
+          // Clear the projectGenerated flag for fresh generation
+          console.log('[Step3] Clearing projectGenerated flag for fresh generation');
+          sessionStorage.removeItem('projectGenerated');
+
+          console.log('[Step3] Dispatching wizard:next event');
+          // Move to next step
+          window.dispatchEvent(new CustomEvent('wizard:next'));
+
+        } catch (err) {
+          console.error('[Step3] Generation error:', err);
+          btn?.removeAttribute('disabled');
+          btn!.innerHTML = 'Generate Project →';
+        }
+      }
+    });
+
+    // Listen for when this step becomes active
+    window.addEventListener('step:3:active', () => {
+      console.log('[Step3] Step activated');
+
+      // ALWAYS re-analyze to use new AI-driven MCP recommendations
+      // TODO: Re-enable caching after testing
+      console.log('[Step3] Clearing cache and re-analyzing with AI...');
+      sessionStorage.removeItem('analysisData');
+      analyzeProject();
+    });
+  });
+</script>

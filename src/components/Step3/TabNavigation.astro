@@ -1,0 +1,37 @@
+---
+interface Tab {
+  id: string;
+  label: string;
+  icon: string;
+}
+
+const tabs: Tab[] = [
+  { id: 'overview', label: 'Overview', icon: '📊' },
+  { id: 'prompt', label: 'Prompt Preview', icon: '📝' },
+  { id: 'customize', label: 'Customize', icon: '⚙️' },
+  { id: 'files', label: 'Files Preview', icon: '📁' }
+];
+---
+
+<div class="border-b border-gray-200 mb-6">
+  <nav class="-mb-px flex space-x-8">
+    {tabs.map((tab) => (
+      <button
+        type="button"
+        @click={`activeTab = '${tab.id}'; window.dispatchEvent(new CustomEvent('step3:tab-change', { detail: '${tab.id}' }))`}
+        :class={`activeTab === '${tab.id}' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'`}
+        class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2"
+      >
+        <span class="text-lg">{tab.icon}</span>
+        <span>{tab.label}</span>
+      </button>
+    ))}
+  </nav>
+</div>
+
+<style>
+  /* Smooth transition for tab content */
+  [x-show] {
+    transition: opacity 0.3s ease-in-out;
+  }
+</style>

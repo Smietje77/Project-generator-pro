@@ -1,0 +1,226 @@
+---
+---
+
+<div x-show="activeTab === 'files'" x-cloak class="space-y-4">
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h3 class="text-lg font-semibold text-gray-900">Project Files Preview</h3>
+      <p class="text-sm text-gray-600 mt-1">Complete file structure that will be generated</p>
+    </div>
+    <div class="text-sm text-gray-500">
+      <span id="total-files-count">-</span> files will be created
+    </div>
+  </div>
+
+  <!-- File Tree -->
+  <div class="bg-gray-50 border-2 border-gray-200 rounded-lg p-6 max-h-[70vh] overflow-y-auto">
+    <div id="file-tree" class="font-mono text-sm space-y-1">
+      <!-- Will be populated dynamically -->
+      <div class="flex items-center gap-2 text-gray-500">
+        <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+          <circle class="opacity-75" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" stroke-dasharray="32" stroke-dashoffset="16"></circle>
+        </svg>
+        <span>Loading file structure...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- File Preview Modal -->
+  <div
+    id="file-preview-modal"
+    class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"
+    @click.self="document.getElementById('file-preview-modal').classList.add('hidden')"
+  >
+    <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+      <!-- Modal Header -->
+      <div class="bg-gray-800 text-white px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span id="preview-file-icon" class="text-2xl">📄</span>
+          <h4 id="preview-file-name" class="font-mono font-semibold">file.txt</h4>
+        </div>
+        <button
+          type="button"
+          @click="document.getElementById('file-preview-modal').classList.add('hidden')"
+          class="text-gray-300 hover:text-white transition-colors"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Content -->
+      <div class="p-6 overflow-y-auto max-h-[70vh]">
+        <pre id="preview-file-content" class="text-sm font-mono whitespace-pre-wrap bg-gray-900 text-gray-100 p-4 rounded-lg">
+File content will appear here...
+        </pre>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="bg-gray-100 px-6 py-3 flex justify-end gap-2">
+        <button
+          type="button"
+          id="copy-file-content-btn"
+          class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition-colors text-sm font-medium"
+        >
+          📋 Copy Content
+        </button>
+        <button
+          type="button"
+          @click="document.getElementById('file-preview-modal').classList.add('hidden')"
+          class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors text-sm font-medium"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  [x-cloak] {
+    display: none !important;
+  }
+</style>
+
+<script>
+  // File tree structure
+  interface FileNode {
+    name: string;
+    type: 'file' | 'folder';
+    children?: FileNode[];
+    content?: string;
+    description?: string;
+  }
+
+  function getFileIcon(fileName: string, isFolder: boolean): string {
+    if (isFolder) return '📁';
+
+    if (fileName.endsWith('.md')) return '📝';
+    if (fileName.endsWith('.json')) return '⚙️';
+    if (fileName.endsWith('.js') || fileName.endsWith('.ts')) return '📜';
+    if (fileName === '.gitignore') return '🚫';
+    if (fileName === '.env.example') return '🔐';
+    if (fileName === 'package.json') return '📦';
+    if (fileName === 'README.md') return '📖';
+
+    return '📄';
+  }
+
+  function renderFileTree(nodes: FileNode[], level: number = 0): string {
+    return nodes.map(node => {
+      const indent = '  '.repeat(level);
+      const icon = getFileIcon(node.name, node.type === 'folder');
+
+      if (node.type === 'folder') {
+        const children = node.children ? renderFileTree(node.children, level + 1) : '';
+        return `
+          <div class="file-tree-folder">
+            <div class="flex items-center gap-2 py-1 hover:bg-gray-100 cursor-pointer group" onclick="this.parentElement.classList.toggle('collapsed')">
+              <span class="folder-toggle transition-transform">▼</span>
+              <span>${icon}</span>
+              <span class="text-gray-800 font-semibold">${node.name}/</span>
+              ${node.description ? `<span class="text-xs text-gray-500 ml-2">(${node.description})</span>` : ''}
+            </div>
+            <div class="folder-content ml-6">
+              ${children}
+            </div>
+          </div>`;
+      } else {
+        return `
+          <div class="flex items-center gap-2 py-1 hover:bg-gray-100 cursor-pointer rounded px-2 -mx-2 group"
+               onclick="window.showFilePreview('${node.name}', \`${(node.content || '').replace(/`/g, '\\`')}\`)">
+            <span>${icon}</span>
+            <span class="text-gray-700">${node.name}</span>
+            ${node.description ? `<span class="text-xs text-gray-500 ml-2">(${node.description})</span>` : ''}
+            <span class="ml-auto opacity-0 group-hover:opacity-100 text-xs text-primary-600 transition-opacity">👁️ Preview</span>
+          </div>`;
+      }
+    }).join('');
+  }
+
+  // Show file preview modal
+  (window as any).showFilePreview = (fileName: string, content: string) => {
+    const modal = document.getElementById('file-preview-modal');
+    const nameEl = document.getElementById('preview-file-name');
+    const contentEl = document.getElementById('preview-file-content');
+    const iconEl = document.getElementById('preview-file-icon');
+
+    if (nameEl) nameEl.textContent = fileName;
+    if (contentEl) contentEl.textContent = content || 'No content available for preview.';
+    if (iconEl) iconEl.textContent = getFileIcon(fileName, false);
+
+    modal?.classList.remove('hidden');
+    modal?.classList.add('flex');
+  };
+
+  // Copy file content
+  document.getElementById('copy-file-content-btn')?.addEventListener('click', async () => {
+    const content = document.getElementById('preview-file-content')?.textContent;
+    if (content) {
+      try {
+        await navigator.clipboard.writeText(content);
+        const btn = document.getElementById('copy-file-content-btn');
+        const originalText = btn?.textContent;
+        if (btn) {
+          btn.textContent = '✓ Copied!';
+          setTimeout(() => {
+            btn.textContent = originalText;
+          }, 2000);
+        }
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
+    }
+  });
+
+  // Folder toggle styling
+  document.addEventListener('DOMContentLoaded', () => {
+    const style = document.createElement('style');
+    style.textContent = `
+      .file-tree-folder.collapsed > .folder-content {
+        display: none;
+      }
+      .file-tree-folder.collapsed > div > .folder-toggle {
+        transform: rotate(-90deg);
+      }
+    `;
+    document.head.appendChild(style);
+  });
+
+  // Listen for file structure data
+  window.addEventListener('step3:files-ready', ((event: CustomEvent) => {
+    const { fileStructure, projectName } = event.detail;
+
+    const treeEl = document.getElementById('file-tree');
+    const countEl = document.getElementById('total-files-count');
+
+    if (treeEl && fileStructure) {
+      const rendered = renderFileTree(fileStructure);
+      treeEl.innerHTML = `
+        <div class="file-tree-folder">
+          <div class="flex items-center gap-2 py-1 font-bold text-primary-700">
+            <span>📦</span>
+            <span>${projectName || 'project'}/</span>
+          </div>
+          <div class="folder-content ml-6">
+            ${rendered}
+          </div>
+        </div>`;
+    }
+
+    // Count total files
+    const countFiles = (nodes: FileNode[]): number => {
+      return nodes.reduce((count, node) => {
+        if (node.type === 'file') return count + 1;
+        return count + (node.children ? countFiles(node.children) : 0);
+      }, 0);
+    };
+
+    if (countEl && fileStructure) {
+      countEl.textContent = countFiles(fileStructure).toString();
+    }
+  }) as EventListener);
+</script>
