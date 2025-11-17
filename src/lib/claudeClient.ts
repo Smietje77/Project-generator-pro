@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 
 const client = new Anthropic({
-  apiKey: import.meta.env.ANTHROPIC_API_KEY || ''
+  apiKey: process.env.ANTHROPIC_API_KEY || import.meta.env.ANTHROPIC_API_KEY || ''
 });
 
 /**
