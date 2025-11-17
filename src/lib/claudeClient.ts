@@ -1,22 +1,30 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-// IMPORTANT: Use process.env directly for SSR runtime
-// This is a server-side only module, so process.env is always available
-const apiKey = process.env.ANTHROPIC_API_KEY;
-
-if (!apiKey) {
-  console.error('[ClaudeClient] CRITICAL: ANTHROPIC_API_KEY not found in process.env');
-  console.error('[ClaudeClient] Available env vars:', Object.keys(process.env).filter(k => k.includes('ANTHROPIC')));
-}
-
-const client = new Anthropic({
-  apiKey: apiKey || ''
-});
-
 /**
  * Anthropic API client wrapper
  */
 export class ClaudeClient {
+  private client: Anthropic | null = null;
+
+  /**
+   * Get or create Anthropic client instance
+   * This is lazy-initialized to ensure we read process.env at runtime, not build time
+   */
+  private getClient(): Anthropic {
+    if (!this.client) {
+      const apiKey = process.env.ANTHROPIC_API_KEY;
+      
+      if (!apiKey) {
+        console.error('[ClaudeClient] CRITICAL: ANTHROPIC_API_KEY not found in process.env');
+        console.error('[ClaudeClient] Available env keys:', Object.keys(process.env).join(', '));
+        throw new Error('ANTHROPIC_API_KEY is not configured');
+      }
+
+      console.log('[ClaudeClient] Initializing with API key:', apiKey.substring(0, 15) + '...');
+      this.client = new Anthropic({ apiKey });
+    }
+    return this.client;
+  }
   
   /**
    * Generate enhanced project analysis using Claude
@@ -26,7 +34,7 @@ export class ClaudeClient {
     techRecommendations: Record<string, string[]>;
     complexityEstimate: string;
   }> {
-    const response = await client.messages.create({
+    const response = await this.getClient().messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 2000,
       messages: [{
@@ -84,7 +92,7 @@ Respond in JSON format:
     };
     reasoning: string;
   }> {
-    const response = await client.messages.create({
+    const response = await this.getClient().messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 2000,
       messages: [{
@@ -206,7 +214,7 @@ Respond ONLY with valid JSON in this exact format:
     required: boolean;
     reasoning: string;
   }>> {
-    const response = await client.messages.create({
+    const response = await this.getClient().messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 3000,
       messages: [{
@@ -302,7 +310,7 @@ Be conservative - only recommend what's truly needed. Quality over quantity.`
     isValid: boolean;
     suggestions: string[];
   }> {
-    const response = await client.messages.create({
+    const response = await this.getClient().messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1000,
       messages: [{
