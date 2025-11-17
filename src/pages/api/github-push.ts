@@ -109,8 +109,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     };
 
     // Get GitHub credentials from environment
-    const githubUsername = import.meta.env.GITHUB_USERNAME || 'Smietje77';
-    const githubToken = import.meta.env.GITHUB_TOKEN;
+    const githubUsername = process.env.GITHUB_USERNAME || 'Smietje77';
+    const githubToken = process.env.GITHUB_TOKEN;
 
     if (!githubToken) {
       return new Response(JSON.stringify({
@@ -285,7 +285,7 @@ export const GET: APIRoute = async ({ url, cookies }) => {
       });
     }
 
-    const githubUsername = import.meta.env.GITHUB_USERNAME || 'Smietje77';
+    const githubUsername = process.env.GITHUB_USERNAME || 'Smietje77';
     const githubUrl = `https://github.com/${githubUsername}/${repoName}`;
 
     return new Response(JSON.stringify({

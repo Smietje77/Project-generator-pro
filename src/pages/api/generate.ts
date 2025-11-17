@@ -98,7 +98,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const generatedPrompt = promptGen.generate(analysisResult);
 
     // Step 3: Create project directory structure
-    const projectPath = path.join('C:', 'claude_projects', sanitizedName);
+    // Use environment variable for base path (works in both dev and production)
+    const basePath = process.env.CLAUDE_PROJECTS_PATH || 'C:\\claude_projects';
+    const projectPath = path.join(basePath, sanitizedName);
 
     try {
       // Create main directory

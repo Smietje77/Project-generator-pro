@@ -1,7 +1,7 @@
 FROM node:20-alpine
 
-# Install bash for debugging
-RUN apk add --no-cache bash
+# Install bash and git for debugging and GitHub operations
+RUN apk add --no-cache bash git
 
 WORKDIR /app
 
