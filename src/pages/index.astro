@@ -193,9 +193,9 @@ import Step4 from '../components/Step4.astro';
       const data = await response.json();
       isAuthenticated = data.authenticated;
 
-      if (isAuthenticated) {
-        showWizard();
-      } else {
+      // Don't auto-show wizard, let user click "Get Started" button
+      // Only show login modal if not authenticated
+      if (!isAuthenticated) {
         showLoginModal();
       }
     } catch (err) {
@@ -337,7 +337,20 @@ import Step4 from '../components/Step4.astro';
           if (data.success) {
             isAuthenticated = true;
             loginError?.classList.add('hidden');
-            showWizard();
+
+            // Close modal and show hero section (don't auto-start wizard)
+            const modal = document.getElementById('login-modal');
+            const hero = document.getElementById('hero-section');
+
+            if (modal) {
+              modal.classList.add('hidden');
+              const alpineData = Alpine.$data(modal);
+              if (alpineData) alpineData.open = false;
+            }
+
+            if (hero) {
+              hero.classList.remove('opacity-50', 'pointer-events-none');
+            }
           } else {
             loginError?.classList.remove('hidden');
             loginBtn?.removeAttribute('disabled');
