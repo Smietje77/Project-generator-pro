@@ -52,6 +52,9 @@ ANTHROPIC_API_KEY=your-anthropic-api-key-here
 GITHUB_TOKEN=your-github-token-here
 GITHUB_USERNAME=Smietje77
 
+# Project Storage Path (IMPORTANT for VPS)
+CLAUDE_PROJECTS_PATH=/root/apps/Projects
+
 # Environment
 NODE_ENV=production
 
