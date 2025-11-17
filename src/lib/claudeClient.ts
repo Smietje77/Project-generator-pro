@@ -1,7 +1,25 @@
 import Anthropic from '@anthropic-ai/sdk';
 
+// Get API key from runtime environment
+// In production (Docker), this will be process.env
+// In dev (Astro), this will be import.meta.env
+function getApiKey(): string {
+  // Try process.env first (production/Docker)
+  if (typeof process !== 'undefined' && process.env?.ANTHROPIC_API_KEY) {
+    return process.env.ANTHROPIC_API_KEY;
+  }
+  
+  // Fallback to import.meta.env (Astro dev)
+  if (typeof import.meta.env !== 'undefined' && import.meta.env.ANTHROPIC_API_KEY) {
+    return import.meta.env.ANTHROPIC_API_KEY;
+  }
+  
+  console.error('[ClaudeClient] ANTHROPIC_API_KEY not found in environment');
+  return '';
+}
+
 const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || import.meta.env.ANTHROPIC_API_KEY || ''
+  apiKey: getApiKey()
 });
 
 /**
