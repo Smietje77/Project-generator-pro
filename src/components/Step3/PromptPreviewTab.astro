@@ -101,6 +101,12 @@ Loading prompt preview...
   window.addEventListener('step3:prompt-ready', ((event: CustomEvent) => {
     const { prompt, analysis } = event.detail;
 
+    console.log('[PromptPreview] Received event:', {
+      hasPrompt: !!prompt,
+      hasAnalysis: !!analysis,
+      analysisKeys: analysis ? Object.keys(analysis) : []
+    });
+
     // Display prompt
     const promptContent = document.getElementById('prompt-preview-content');
     if (promptContent && prompt) {
@@ -114,10 +120,25 @@ Loading prompt preview...
       const mcpsStat = document.getElementById('prompt-stat-mcps');
       const charsStat = document.getElementById('prompt-stat-chars');
 
-      if (agentsStat) agentsStat.textContent = analysis.totalAgents || analysis.agents?.length || '-';
-      if (tasksStat) tasksStat.textContent = analysis.totalTasks || analysis.tasks?.length || '-';
-      if (mcpsStat) mcpsStat.textContent = analysis.totalMCPs || analysis.mcps?.length || '-';
-      if (charsStat && prompt) charsStat.textContent = prompt.length.toLocaleString();
+      // Try multiple possible property names for compatibility
+      if (agentsStat) {
+        const agentsCount = analysis.totalAgents || analysis.requiredAgents?.length || analysis.agents?.length || '-';
+        agentsStat.textContent = agentsCount;
+        console.log('[PromptPreview] Agents count:', agentsCount);
+      }
+      if (tasksStat) {
+        const tasksCount = analysis.totalTasks || analysis.taskBreakdown?.length || analysis.tasks?.length || '-';
+        tasksStat.textContent = tasksCount;
+        console.log('[PromptPreview] Tasks count:', tasksCount);
+      }
+      if (mcpsStat) {
+        const mcpsCount = analysis.totalMCPs || analysis.recommendedMCPs?.length || analysis.mcps?.length || '-';
+        mcpsStat.textContent = mcpsCount;
+        console.log('[PromptPreview] MCPs count:', mcpsCount);
+      }
+      if (charsStat && prompt) {
+        charsStat.textContent = prompt.length.toLocaleString();
+      }
     }
 
     // Generate Table of Contents
