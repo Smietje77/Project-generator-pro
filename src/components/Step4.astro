@@ -152,6 +152,7 @@ import Alert from './ui/Alert.astro';
 <script>
   import { showError, showSuccess, showInfo } from '../lib/notifications';
   import { createButtonState } from '../lib/buttonState';
+  import { addToHistory } from '../lib/projectHistory';
 
   console.log('[Step4] Script loaded');
 
@@ -322,6 +323,28 @@ import Alert from './ui/Alert.astro';
 
       if (data.projectPath && projectPathEl) {
         projectPathEl.textContent = data.projectPath;
+      }
+
+      // Add to project history
+      try {
+        const step1Data = JSON.parse(sessionStorage.getItem('step1Data') || '{}');
+        const step2Data = JSON.parse(sessionStorage.getItem('step2Data') || '{}');
+        const templateId = sessionStorage.getItem('templateId');
+
+        addToHistory({
+          projectName: step1Data.projectName,
+          description: step1Data.description,
+          projectType: step1Data.projectType,
+          templateId: templateId || undefined,
+          projectPath: data.projectPath,
+          sanitizedName: data.sanitizedName,
+          features: step2Data.features || [],
+          techStack: step2Data.techStack || {}
+        });
+
+        console.log('[Step4] Added project to history');
+      } catch (error) {
+        console.error('[Step4] Error adding to history:', error);
       }
     }
 

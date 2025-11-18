@@ -3,6 +3,7 @@ import Card from './ui/Card.astro';
 import Input from './ui/Input.astro';
 import Textarea from './ui/Textarea.astro';
 import Button from './ui/Button.astro';
+import ProjectHistory from './ui/ProjectHistory.astro';
 import { QUICK_START_TEMPLATES } from '../lib/quickStartTemplates';
 
 const projectTypes = [
@@ -19,6 +20,9 @@ const projectTypes = [
 // Sort templates by popularity for display
 const sortedTemplates = [...QUICK_START_TEMPLATES].sort((a, b) => b.popularity - a.popularity);
 ---
+
+<!-- Project History Section -->
+<ProjectHistory />
 
 <!-- Quick Start Templates Section -->
 <div class="mb-8">
