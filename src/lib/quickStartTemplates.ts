@@ -267,6 +267,192 @@ export const QUICK_START_TEMPLATES: QuickStartTemplate[] = [
         teamSize: 3
       }
     }
+  },
+  {
+    id: 'chrome-extension',
+    name: 'Chrome Extension',
+    icon: '🔌',
+    description: 'Browser extension with popup, background scripts, and content injection',
+    estimatedTime: '10-20 seconds',
+    popularity: 4,
+    tags: ['extension', 'browser', 'chrome', 'plugin'],
+    config: {
+      type: 'desktop-app',
+      features: [
+        { id: 'extension-popup', name: 'Popup Interface', category: 'ui', required: true },
+        { id: 'background-script', name: 'Background Scripts', category: 'automation', required: true },
+        { id: 'content-injection', name: 'Content Scripts', category: 'automation', required: true },
+        { id: 'storage-local', name: 'Local Storage', category: 'storage', required: true },
+        { id: 'api-integration', name: 'API Integration', category: 'api', required: false },
+        { id: 'settings-page', name: 'Options Page', category: 'ui', required: false }
+      ],
+      techStack: {
+        frontend: ['TypeScript', 'React', 'Webpack'],
+        backend: [],
+        database: []
+      },
+      metadata: {
+        createdAt: new Date(),
+        estimatedComplexity: 'simple',
+        estimatedDuration: '3-5 days',
+        teamSize: 1
+      }
+    }
+  },
+  {
+    id: 'discord-bot',
+    name: 'Discord Bot',
+    icon: '🤖',
+    description: 'Discord bot with slash commands, events, and database integration',
+    estimatedTime: '10-20 seconds',
+    popularity: 4,
+    tags: ['discord', 'bot', 'automation', 'chat'],
+    config: {
+      type: 'other',
+      features: [
+        { id: 'discord-commands', name: 'Slash Commands', category: 'automation', required: true },
+        { id: 'discord-events', name: 'Event Handlers', category: 'automation', required: true },
+        { id: 'db-persistence', name: 'Data Persistence', category: 'database', required: true },
+        { id: 'moderation', name: 'Moderation Tools', category: 'automation', required: false },
+        { id: 'music-player', name: 'Music Playback', category: 'media', required: false },
+        { id: 'api-external', name: 'External APIs', category: 'api', required: false }
+      ],
+      techStack: {
+        frontend: [],
+        backend: ['Node.js', 'Discord.js', 'TypeScript'],
+        database: ['SQLite']
+      },
+      metadata: {
+        createdAt: new Date(),
+        estimatedComplexity: 'simple',
+        estimatedDuration: '3-5 days',
+        teamSize: 1
+      }
+    }
+  },
+  {
+    id: 'vscode-extension',
+    name: 'VS Code Extension',
+    icon: '🎯',
+    description: 'Visual Studio Code extension with commands, snippets, and language support',
+    estimatedTime: '10-15 seconds',
+    popularity: 3,
+    tags: ['vscode', 'extension', 'editor', 'tools'],
+    config: {
+      type: 'other',
+      features: [
+        { id: 'vscode-commands', name: 'Custom Commands', category: 'automation', required: true },
+        { id: 'code-snippets', name: 'Code Snippets', category: 'automation', required: true },
+        { id: 'syntax-highlighting', name: 'Syntax Highlighting', category: 'ui', required: false },
+        { id: 'quick-fix', name: 'Quick Fix Provider', category: 'automation', required: false },
+        { id: 'tree-view', name: 'Tree View Panel', category: 'ui', required: false },
+        { id: 'webview', name: 'Webview UI', category: 'ui', required: false }
+      ],
+      techStack: {
+        frontend: ['TypeScript'],
+        backend: ['Node.js'],
+        database: []
+      },
+      metadata: {
+        createdAt: new Date(),
+        estimatedComplexity: 'simple',
+        estimatedDuration: '3-5 days',
+        teamSize: 1
+      }
+    }
+  },
+  {
+    id: 'docs-site',
+    name: 'Documentation Site',
+    icon: '📚',
+    description: 'Documentation website with search, versioning, and API reference',
+    estimatedTime: '10-15 seconds',
+    popularity: 3,
+    tags: ['docs', 'documentation', 'knowledge', 'wiki'],
+    config: {
+      type: 'website',
+      features: [
+        { id: 'docs-markdown', name: 'Markdown Docs', category: 'content', required: true },
+        { id: 'search-docs', name: 'Full-text Search', category: 'search', required: true },
+        { id: 'versioning', name: 'Version Control', category: 'content', required: true },
+        { id: 'api-reference', name: 'API Documentation', category: 'documentation', required: false },
+        { id: 'dark-mode', name: 'Dark Mode', category: 'ui', required: false },
+        { id: 'i18n', name: 'Internationalization', category: 'localization', required: false }
+      ],
+      techStack: {
+        frontend: ['Astro', 'TypeScript', 'Tailwind CSS'],
+        backend: [],
+        database: []
+      },
+      metadata: {
+        createdAt: new Date(),
+        estimatedComplexity: 'simple',
+        estimatedDuration: '3-5 days',
+        teamSize: 1
+      }
+    }
+  },
+  {
+    id: 'portfolio',
+    name: 'Portfolio Website',
+    icon: '👨‍💻',
+    description: 'Personal portfolio with projects showcase, blog, and contact form',
+    estimatedTime: '10-15 seconds',
+    popularity: 5,
+    tags: ['portfolio', 'personal', 'showcase', 'resume'],
+    config: {
+      type: 'website',
+      features: [
+        { id: 'project-showcase', name: 'Project Gallery', category: 'content', required: true },
+        { id: 'blog-posts', name: 'Blog Section', category: 'content', required: false },
+        { id: 'contact-form', name: 'Contact Form', category: 'communication', required: true },
+        { id: 'resume-download', name: 'Resume/CV', category: 'content', required: true },
+        { id: 'animations', name: 'Smooth Animations', category: 'ui', required: false },
+        { id: 'seo-meta', name: 'SEO Optimization', category: 'marketing', required: true }
+      ],
+      techStack: {
+        frontend: ['Astro', 'TypeScript', 'Tailwind CSS'],
+        backend: [],
+        database: []
+      },
+      metadata: {
+        createdAt: new Date(),
+        estimatedComplexity: 'simple',
+        estimatedDuration: '2-3 days',
+        teamSize: 1
+      }
+    }
+  },
+  {
+    id: 'data-pipeline',
+    name: 'Data Pipeline',
+    icon: '⚙️',
+    description: 'ETL pipeline for data processing, transformation, and scheduling',
+    estimatedTime: '15-20 seconds',
+    popularity: 2,
+    tags: ['etl', 'data', 'pipeline', 'processing'],
+    config: {
+      type: 'other',
+      features: [
+        { id: 'data-extraction', name: 'Data Extraction', category: 'data', required: true },
+        { id: 'data-transform', name: 'Data Transformation', category: 'data', required: true },
+        { id: 'data-loading', name: 'Data Loading', category: 'data', required: true },
+        { id: 'scheduler', name: 'Job Scheduling', category: 'automation', required: true },
+        { id: 'error-handling', name: 'Error Handling', category: 'monitoring', required: true },
+        { id: 'monitoring', name: 'Pipeline Monitoring', category: 'monitoring', required: false }
+      ],
+      techStack: {
+        frontend: [],
+        backend: ['Python', 'Apache Airflow'],
+        database: ['PostgreSQL']
+      },
+      metadata: {
+        createdAt: new Date(),
+        estimatedComplexity: 'moderate',
+        estimatedDuration: '1-2 weeks',
+        teamSize: 2
+      }
+    }
   }
 ];
 
