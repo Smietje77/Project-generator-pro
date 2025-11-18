@@ -35,27 +35,15 @@ export class ClaudeClient {
     complexityEstimate: string;
   }> {
     const response = await this.getClient().messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 2000,
+      model: 'claude-3-5-haiku-20241022', // Using Haiku for speed
+      max_tokens: 1000,
       messages: [{
         role: 'user',
-        content: `Analyze this project description and provide:
-1. Suggested features (list 5-10)
-2. Tech stack recommendations (frontend, backend, database)
-3. Complexity estimate (simple/moderate/complex/enterprise)
+        content: `Analyze: ${description.substring(0, 300)}
 
-Project: ${description}
+List 5 features, tech stacks, and complexity (simple/moderate/complex).
 
-Respond in JSON format:
-{
-  "suggestedFeatures": ["feature1", "feature2", ...],
-  "techRecommendations": {
-    "frontend": ["tech1", "tech2"],
-    "backend": ["tech1", "tech2"],
-    "database": ["tech1", "tech2"]
-  },
-  "complexityEstimate": "moderate"
-}`
+JSON: {"suggestedFeatures": ["f1","f2"], "techRecommendations": {"frontend": ["t1"], "backend": ["t2"], "database": ["t3"]}, "complexityEstimate": "moderate"}`
       }]
     });
 
@@ -93,48 +81,18 @@ Respond in JSON format:
     reasoning: string;
   }> {
     const response = await this.getClient().messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 2000,
+      model: 'claude-3-5-haiku-20241022', // Using Haiku for faster suggestions
+      max_tokens: 1000, // Reduced for faster response
       messages: [{
         role: 'user',
-        content: `Analyze this project and suggest the optimal tech stack and features.
+        content: `Features & stack for ${input.projectType}: ${input.description.substring(0, 200)}
 
-Project Name: ${input.projectName}
-Project Type: ${input.projectType}
-Description: ${input.description}
+Pick from: auth, database, api, upload, email, payment, analytics, testing
+Frontend: react/vue/astro/svelte/next
+Backend: node/bun/python/go/none
+Database: postgresql/mysql/mongodb/supabase/none
 
-Based on this information, determine:
-
-1. Which features to enable from these options:
-   - "auth" (Authentication: user login, registration, password reset)
-   - "database" (Database: data persistence and queries)
-   - "api" (API Routes: RESTful or GraphQL endpoints)
-   - "upload" (File Upload: image and file handling)
-   - "email" (Email Service: transactional emails)
-   - "payment" (Payment Integration: Stripe, PayPal, etc.)
-   - "analytics" (Analytics: user tracking and insights)
-   - "testing" (Testing Setup: unit and E2E tests)
-
-2. Best frontend framework from: "react", "vue", "astro", "svelte", "next"
-
-3. Best backend runtime from: "node", "bun", "python", "go", "none"
-   (Choose "none" only for pure static sites)
-
-4. Best database from: "postgresql", "mysql", "mongodb", "supabase", "none"
-   (Choose "none" only if no data persistence needed)
-
-5. Brief reasoning for your recommendations (2-3 sentences)
-
-Respond ONLY with valid JSON in this exact format:
-{
-  "features": ["feature1", "feature2"],
-  "techStack": {
-    "frontend": "react",
-    "backend": "node",
-    "database": "postgresql"
-  },
-  "reasoning": "Your explanation here"
-}`
+JSON: {"features": ["f1","f2"], "techStack": {"frontend": "x", "backend": "y", "database": "z"}, "reasoning": "why"}`
       }]
     });
 
@@ -215,59 +173,22 @@ Respond ONLY with valid JSON in this exact format:
     reasoning: string;
   }>> {
     const response = await this.getClient().messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 3000,
+      model: 'claude-3-5-haiku-20241022', // Using Haiku for 3x faster response time
+      max_tokens: 2000, // Reduced from 3000 for faster response
       messages: [{
         role: 'user',
-        content: `You are an expert at analyzing project requirements and recommending the best MCP (Model Context Protocol) servers to enable AI agents to build the project effectively.
+        content: `Select MCP servers for: ${input.projectType} project with ${input.features.slice(0, 3).join(', ')}
 
-PROJECT DETAILS:
-Name: ${input.projectName}
-Type: ${input.projectType}
-Description: ${input.description}
-
-Features: ${input.features.join(', ')}
-Tech Stack:
-- Frontend: ${input.techStack.frontend?.join(', ') || 'none'}
-- Backend: ${input.techStack.backend?.join(', ') || 'none'}
-- Database: ${input.techStack.database?.join(', ') || 'none'}
-
-AVAILABLE MCP SERVERS:
-${input.availableMCPs.map(mcp => `
-${mcp.id}:
-  Name: ${mcp.name}
-  Description: ${mcp.description}
-  Capabilities: ${mcp.capabilities.join(', ')}
-  Use Cases: ${mcp.useCases.join(', ')}
-  Categories: ${mcp.categories.join(', ')}
-`).join('\n')}
-
-TASK:
-Analyze the project requirements and select the MINIMUM set of MCP servers needed for AI agents to successfully build this project.
+AVAILABLE:
+${input.availableMCPs.slice(0, 12).map(mcp => `${mcp.id}: ${mcp.description.substring(0, 80)}`).join('\n')}
 
 RULES:
-1. "desktop-commander" is ALWAYS required (for file operations)
-2. "github" is ALWAYS required (for version control)
-3. Only recommend database platform MCPs (supabase/airtable) if explicitly mentioned in description OR if the database choice matches
-4. Do NOT recommend automation tools (n8n, zapier) unless the project is specifically about automation/workflows
-5. Do NOT recommend API testing tools unless explicitly needed
-6. Do NOT recommend tools that overlap in functionality
-7. Focus on tools that AI agents will ACTUALLY USE during development
-8. Mark a server as "required: true" only if the project CANNOT be built without it
-9. Mark others as "required: false" (optional enhancements)
+- Always include: desktop-commander, github
+- Only add database MCPs if database is in tech stack
+- Be minimal - only recommend what's essential
 
-Respond ONLY with valid JSON in this exact format:
-{
-  "recommendations": [
-    {
-      "id": "mcp-server-id",
-      "required": true,
-      "reasoning": "Brief explanation why this MCP is needed for THIS specific project"
-    }
-  ]
-}
-
-Be conservative - only recommend what's truly needed. Quality over quantity.`
+JSON format:
+{"recommendations": [{"id": "mcp-id", "required": true/false, "reasoning": "why needed"}]}`
       }]
     });
 
