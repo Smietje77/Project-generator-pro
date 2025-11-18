@@ -77,6 +77,7 @@ JSON: {"suggestedFeatures": ["f1","f2"], "techRecommendations": {"frontend": ["t
     projectName: string;
     description: string;
     projectType: string;
+    discoveryData?: any;
   }): Promise<{
     features: string[];
     techStack: {
@@ -86,12 +87,24 @@ JSON: {"suggestedFeatures": ["f1","f2"], "techRecommendations": {"frontend": ["t
     };
     reasoning: string;
   }> {
-    const response = await this.getClient().messages.create({
-      model: 'claude-3-5-haiku-20241022', // Using Haiku for faster suggestions
-      max_tokens: 1000, // Reduced for faster response
-      messages: [{
-        role: 'user',
-        content: `Features & stack for ${input.projectType}: ${input.description.substring(0, 200)}
+    // Build prompt with optional discovery data
+    let prompt = `Features & stack for ${input.projectType}: ${input.description.substring(0, 200)}`;
+
+    // Add discovery insights if available
+    if (input.discoveryData && input.discoveryData.answers) {
+      prompt += '\n\nADDITIONAL PROJECT INSIGHTS:';
+      const { questions, answers } = input.discoveryData;
+
+      questions.forEach((q: any) => {
+        const answer = answers[q.id];
+        if (answer) {
+          const answerText = Array.isArray(answer) ? answer.join(', ') : answer;
+          prompt += `\n- ${q.question}: ${answerText}`;
+        }
+      });
+    }
+
+    prompt += `
 
 Pick from: auth, database, api, upload, email, payment, analytics, testing
 Frontend: react/vue/astro/svelte/next
@@ -100,7 +113,14 @@ Database: postgresql/mysql/mongodb/supabase/none
 
 CRITICAL: OUTPUT ONLY THE JSON, NO EXPLANATIONS OR TEXT BEFORE/AFTER!
 
-JSON: {"features": ["f1","f2"], "techStack": {"frontend": "x", "backend": "y", "database": "z"}, "reasoning": "why"}`
+JSON: {"features": ["f1","f2"], "techStack": {"frontend": "x", "backend": "y", "database": "z"}, "reasoning": "why"}`;
+
+    const response = await this.getClient().messages.create({
+      model: 'claude-3-5-haiku-20241022', // Using Haiku for faster suggestions
+      max_tokens: 1000, // Reduced for faster response
+      messages: [{
+        role: 'user',
+        content: prompt
       }]
     });
 

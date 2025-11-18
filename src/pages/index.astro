@@ -4,9 +4,10 @@ import Button from '../components/ui/Button.astro';
 import Input from '../components/ui/Input.astro';
 import Alert from '../components/ui/Alert.astro';
 import Step1 from '../components/Step1.astro';
-import Step2 from '../components/Step2.astro';
+import Step2Discovery from '../components/Step2Discovery.astro';
 import Step3 from '../components/Step3.astro';
 import Step4 from '../components/Step4.astro';
+import Step5 from '../components/Step5.astro';
 ---
 
 <Layout title="Project Generator Pro - AI-Powered Project Scaffolding">
@@ -57,7 +58,7 @@ import Step4 from '../components/Step4.astro';
       <!-- Progress Steps -->
       <div class="mb-8">
         <div class="flex items-center justify-between">
-          {[1, 2, 3, 4].map((step, index) => (
+          {[1, 2, 3, 4, 5].map((step, index) => (
             <div class="flex items-center flex-1">
               <div class="flex flex-col items-center flex-1">
                 <div
@@ -71,10 +72,10 @@ import Step4 from '../components/Step4.astro';
                   {step}
                 </div>
                 <span class="text-xs mt-2 text-gray-600 hidden sm:block">
-                  {step === 1 ? 'Basics' : step === 2 ? 'Features' : step === 3 ? 'Review' : 'Generate'}
+                  {step === 1 ? 'Basics' : step === 2 ? 'Discovery' : step === 3 ? 'Features' : step === 4 ? 'Review' : 'Generate'}
                 </span>
               </div>
-              {index < 3 && (
+              {index < 4 && (
                 <div class="flex-1 h-1 bg-gray-200 mx-2">
                   <div
                     id={`progress-line-${step}`}
@@ -94,7 +95,7 @@ import Step4 from '../components/Step4.astro';
       </div>
 
       <div id="step-2" class="wizard-step hidden">
-        <Step2 />
+        <Step2Discovery />
       </div>
 
       <div id="step-3" class="wizard-step hidden">
@@ -103,6 +104,10 @@ import Step4 from '../components/Step4.astro';
 
       <div id="step-4" class="wizard-step hidden">
         <Step4 />
+      </div>
+
+      <div id="step-5" class="wizard-step hidden">
+        <Step5 />
       </div>
     </div>
 
@@ -239,7 +244,7 @@ import Step4 from '../components/Step4.astro';
   // Update progress UI
   function updateProgress(step: number) {
     // Update step circles
-    for (let i = 1; i <= 4; i++) {
+    for (let i = 1; i <= 5; i++) {
       const stepEl = document.getElementById(`progress-step-${i}`);
       if (stepEl) {
         if (i < step) {
@@ -255,7 +260,7 @@ import Step4 from '../components/Step4.astro';
       }
 
       // Update progress lines
-      if (i < 4) {
+      if (i < 5) {
         const lineEl = document.getElementById(`progress-line-${i}`);
         if (lineEl) {
           lineEl.style.width = i < step ? '100%' : '0%';
@@ -267,7 +272,7 @@ import Step4 from '../components/Step4.astro';
   // Navigate to step
   function goToStep(step: number) {
     // Hide all steps
-    for (let i = 1; i <= 4; i++) {
+    for (let i = 1; i <= 5; i++) {
       const stepEl = document.getElementById(`step-${i}`);
       if (stepEl) {
         stepEl.classList.add('hidden');
@@ -367,7 +372,7 @@ import Step4 from '../components/Step4.astro';
 
     // Wizard navigation events
     window.addEventListener('wizard:next', () => {
-      if (currentStep < 4) {
+      if (currentStep < 5) {
         goToStep(currentStep + 1);
       }
     });
@@ -380,7 +385,7 @@ import Step4 from '../components/Step4.astro';
 
     // Jump directly to generation for Quick Start Templates
     window.addEventListener('wizard:jumpToGeneration', () => {
-      goToStep(4);
+      goToStep(5);
     });
   });
 </script>

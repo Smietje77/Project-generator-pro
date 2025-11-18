@@ -1,0 +1,531 @@
+---
+import Card from './ui/Card.astro';
+import Button from './ui/Button.astro';
+import Spinner from './ui/Spinner.astro';
+import Alert from './ui/Alert.astro';
+---
+
+<Card title="Step 5: Generate & Deploy" description="Generate your project and optionally push to GitHub">
+  <div id="step4-content" class="space-y-6">
+
+    <!-- Generation Progress -->
+    <div id="generation-progress" class="space-y-4">
+      <div class="flex items-center gap-3">
+        <Spinner size="md" />
+        <div>
+          <h3 class="font-semibold text-gray-900">Generating Your Project</h3>
+          <p id="progress-status" class="text-sm text-gray-600">Initializing...</p>
+        </div>
+      </div>
+
+      <div class="bg-gray-100 rounded-lg h-2 overflow-hidden">
+        <div id="progress-bar" class="bg-indigo-600 h-full transition-all duration-500" style="width: 0%"></div>
+      </div>
+
+      <div id="progress-steps" class="space-y-2 text-sm text-gray-600">
+        <div class="flex items-center gap-2">
+          <span class="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs" id="gen-step-1">1</span>
+          <span>Creating project structure</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs" id="gen-step-2">2</span>
+          <span>Generating AI agents</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs" id="gen-step-3">3</span>
+          <span>Writing configuration files</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs" id="gen-step-4">4</span>
+          <span>Creating project prompt</span>
+        </div>
+      </div>
+
+      <!-- Navigation during generation -->
+      <div class="flex justify-start pt-4">
+        <Button
+          type="button"
+          variant="secondary"
+          id="step4-previous-generating"
+          disabled
+        >
+          ← Previous
+        </Button>
+      </div>
+    </div>
+
+    <!-- Success State -->
+    <div id="generation-success" class="hidden space-y-6">
+      <Alert type="success" message="Project generated successfully!" />
+
+      <!-- Generated Prompt Display -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-gray-900">Generated Project Prompt</h3>
+          <button
+            id="copy-prompt-btn"
+            class="px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
+          >
+            Copy to Clipboard
+          </button>
+        </div>
+
+        <div class="bg-gray-900 text-gray-100 rounded-lg p-6 max-h-[600px] overflow-y-auto border-2 border-gray-700">
+          <pre id="generated-prompt" class="text-sm whitespace-pre-wrap font-mono leading-relaxed">Loading prompt...</pre>
+        </div>
+      </div>
+
+      <!-- Project Path -->
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h4 class="font-semibold text-blue-900 mb-2">Project Location</h4>
+        <code id="project-path" class="text-sm text-blue-800 bg-blue-100 px-2 py-1 rounded">C:\claude_projects\project-name</code>
+      </div>
+
+      <!-- GitHub Push Section -->
+      <div class="space-y-3">
+        <h3 class="text-lg font-semibold text-gray-900">Push to GitHub</h3>
+        <div id="github-section">
+          <Button
+            type="button"
+            variant="primary"
+            id="github-push-btn"
+          >
+            Push to GitHub
+          </Button>
+        </div>
+
+        <div id="github-success" class="hidden bg-green-50 border border-green-200 rounded-lg p-4">
+          <h4 class="font-semibold text-green-900 mb-2">Successfully Pushed!</h4>
+          <a id="github-link" href="#" target="_blank" class="text-green-700 hover:text-green-800 underline">
+            View on GitHub →
+          </a>
+        </div>
+
+        <div id="github-error" class="hidden">
+          <Alert type="error" message="Failed to push to GitHub. You can manually push the project." dismissible />
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex gap-3 pt-4">
+        <Button
+          type="button"
+          variant="secondary"
+          id="start-over-btn"
+        >
+          Start Over
+        </Button>
+
+        <Button
+          type="button"
+          variant="secondary"
+          id="download-zip-btn"
+        >
+          Download ZIP
+        </Button>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div id="generation-error" class="hidden space-y-4">
+      <Alert type="error" message="Failed to generate project. Please try again." />
+      <div class="flex gap-3">
+        <Button
+          type="button"
+          variant="secondary"
+          id="step4-previous-error"
+        >
+          ← Previous
+        </Button>
+        <Button
+          type="button"
+          variant="primary"
+          id="retry-generation-btn"
+        >
+          Try Again
+        </Button>
+      </div>
+    </div>
+  </div>
+</Card>
+
+<script>
+  import { showError, showSuccess, showInfo } from '../lib/notifications';
+  import { createButtonState } from '../lib/buttonState';
+  import { addToHistory } from '../lib/projectHistory';
+
+  // Types
+  interface ProjectData {
+    projectPath: string;
+    promptPath: string;
+    sanitizedName: string;
+    prompt: string;
+    analysis: {
+      totalAgents: number;
+      totalMCPs: number;
+      totalTasks: number;
+    };
+    generationTime?: number;
+  }
+
+  // Generation and deployment logic
+  document.addEventListener('DOMContentLoaded', () => {
+
+    const progressSection = document.getElementById('generation-progress');
+    const successSection = document.getElementById('generation-success');
+    const errorSection = document.getElementById('generation-error');
+    const progressBar = document.getElementById('progress-bar') as HTMLElement;
+    const progressStatus = document.getElementById('progress-status') as HTMLElement;
+    const generatedPromptEl = document.getElementById('generated-prompt') as HTMLElement;
+    const projectPathEl = document.getElementById('project-path') as HTMLElement;
+    const githubPushBtn = document.getElementById('github-push-btn');
+    const githubSuccess = document.getElementById('github-success');
+    const githubError = document.getElementById('github-error');
+    const githubLink = document.getElementById('github-link') as HTMLAnchorElement;
+    const startOverBtn = document.getElementById('start-over-btn');
+    const copyPromptBtn = document.getElementById('copy-prompt-btn');
+
+    let projectData: ProjectData | null = null;
+
+    // Function to update progress
+    function updateProgress(step: number, status: string) {
+      const percentage = (step / 4) * 100;
+      if (progressBar) progressBar.style.width = `${percentage}%`;
+      if (progressStatus) progressStatus.textContent = status;
+
+      // Update step indicators
+      for (let i = 1; i <= 4; i++) {
+        const stepEl = document.getElementById(`gen-step-${i}`);
+        if (stepEl) {
+          if (i < step) {
+            stepEl.className = 'w-5 h-5 rounded-full bg-green-500 text-white flex items-center justify-center text-xs';
+            stepEl.textContent = '✓';
+          } else if (i === step) {
+            stepEl.className = 'w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs animate-pulse';
+          }
+        }
+      }
+    }
+
+    // Function to generate project
+    async function generateProject() {
+      try {
+        // Check if using Quick Start Template
+        const templateId = sessionStorage.getItem('templateId');
+        const skipToGeneration = sessionStorage.getItem('skipToGeneration');
+        const step1Data = JSON.parse(sessionStorage.getItem('step1Data') || '{}');
+
+        let requestBody: any;
+
+        if (templateId && skipToGeneration === 'true') {
+          // Quick Start Template generation - faster path
+          showInfo('⚡ Generating project from template...', { duration: 3000 });
+
+          // Faster progress updates for templates
+          updateProgress(1, '⚡ Loading template configuration...');
+          await new Promise(resolve => setTimeout(resolve, 300));
+
+          updateProgress(2, '⚡ Configuring AI agents...');
+          await new Promise(resolve => setTimeout(resolve, 300));
+
+          updateProgress(3, '⚡ Setting up project files...');
+
+          // Use template-based generation
+          requestBody = {
+            templateId: templateId,
+            config: {
+              projectName: step1Data.projectName,
+              description: step1Data.description,
+              projectType: 'template',
+            }
+          };
+        } else {
+          // Regular custom project generation
+          const step2Data = JSON.parse(sessionStorage.getItem('step2Data') || '{}');
+          const step3Customizations = JSON.parse(sessionStorage.getItem('step3Customizations') || '{}');
+          const analysisData = JSON.parse(sessionStorage.getItem('analysisData') || '{}');
+
+          showInfo('🚀 Generating custom project...', { duration: 3000 });
+
+          // Regular progress updates
+          updateProgress(1, 'Creating project structure...');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+          updateProgress(2, 'Generating AI agents...');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+          updateProgress(3, 'Writing configuration files...');
+
+          requestBody = {
+            config: {
+              projectName: step1Data.projectName,
+              description: step1Data.description,
+              projectType: step1Data.projectType,
+              features: step2Data.features || [],
+              techStack: step2Data.techStack || {},
+              additionalRequirements: step2Data.additionalRequirements,
+            },
+            customizations: step3Customizations,
+            analysis: analysisData,
+          };
+        }
+
+        // Call generate API
+        const response = await fetch('/api/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+        });
+
+        if (!response.ok) {
+          throw new Error('Generation failed');
+        }
+
+        updateProgress(4, templateId ? '⚡ Finalizing quick start project...' : 'Creating project prompt...');
+        const result = await response.json();
+
+        if (!result.success) {
+          throw new Error(result.error || 'Generation failed');
+        }
+
+        projectData = result.data;
+
+        await new Promise(resolve => setTimeout(resolve, templateId ? 200 : 500));
+
+        // Show success
+        displaySuccess(result.data);
+        showSuccess(`Project "${step1Data.projectName}" generated successfully!`, { duration: 5000 });
+
+        // Clear template flags after successful generation
+        if (templateId) {
+          sessionStorage.removeItem('templateId');
+          sessionStorage.removeItem('skipToGeneration');
+        }
+
+      } catch (err) {
+        console.error('Generation error:', err);
+        progressSection?.classList.add('hidden');
+        errorSection?.classList.remove('hidden');
+        showError(`Failed to generate project: ${err instanceof Error ? err.message : 'Unknown error'}`, { duration: 0 });
+      }
+    }
+
+    // Function to display success
+    function displaySuccess(data: any) {
+      progressSection?.classList.add('hidden');
+      successSection?.classList.remove('hidden');
+
+      // Remove any animations from progress indicators
+      for (let i = 1; i <= 4; i++) {
+        const stepEl = document.getElementById(`gen-step-${i}`);
+        if (stepEl) {
+          stepEl.classList.remove('animate-pulse');
+        }
+      }
+
+      if (data.prompt && generatedPromptEl) {
+        generatedPromptEl.textContent = data.prompt;
+      }
+
+      if (data.projectPath && projectPathEl) {
+        projectPathEl.textContent = data.projectPath;
+      }
+
+      // Add to project history
+      try {
+        const step1Data = JSON.parse(sessionStorage.getItem('step1Data') || '{}');
+        const step2Data = JSON.parse(sessionStorage.getItem('step2Data') || '{}');
+        const templateId = sessionStorage.getItem('templateId');
+
+        addToHistory({
+          projectName: step1Data.projectName,
+          description: step1Data.description,
+          projectType: step1Data.projectType,
+          templateId: templateId || undefined,
+          projectPath: data.projectPath,
+          sanitizedName: data.sanitizedName,
+          features: step2Data.features || [],
+          techStack: step2Data.techStack || {}
+        });
+      } catch (error) {
+        // Silent failure for history - not critical
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[Step4] Error adding to history:', error);
+        }
+      }
+    }
+
+    // Create button state managers
+    const githubBtnState = createButtonState(githubPushBtn as HTMLButtonElement, 'Push to GitHub');
+
+    // GitHub push handler
+    githubPushBtn?.addEventListener('click', async () => {
+      if (!projectData) return;
+
+      try {
+        githubBtnState.setLoading('Pushing to GitHub...');
+        showInfo('Pushing project to GitHub...', { duration: 3000 });
+
+        // Get project details
+        const step1Data = JSON.parse(sessionStorage.getItem('step1Data') || '{}');
+
+        const response = await fetch('/api/github-push', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            projectName: step1Data.projectName,
+            sanitizedName: projectData.sanitizedName,
+            projectPath: projectData.projectPath,
+            description: step1Data.description,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('GitHub push failed');
+        }
+
+        const data = await response.json();
+
+        // Show success
+        githubBtnState.setSuccess('✓ Pushed!', 0);
+        githubSuccess?.classList.remove('hidden');
+        if (githubLink && data.githubUrl) {
+          githubLink.href = data.githubUrl;
+        }
+
+        showSuccess(`Successfully pushed to GitHub! Repository: ${data.repoName || step1Data.projectName}`, {
+          duration: 7000,
+          action: {
+            label: 'View Repository',
+            callback: () => {
+              if (data.githubUrl) window.open(data.githubUrl, '_blank');
+            }
+          }
+        });
+
+      } catch (err) {
+        console.error('GitHub push error:', err);
+        githubError?.classList.remove('hidden');
+        githubBtnState.setError('Try Again', 3000);
+        showError(`Failed to push to GitHub: ${err instanceof Error ? err.message : 'Unknown error'}`, { duration: 0 });
+      }
+    });
+
+    // Copy prompt to clipboard
+    copyPromptBtn?.addEventListener('click', async () => {
+      const promptText = generatedPromptEl?.textContent || '';
+      try {
+        await navigator.clipboard.writeText(promptText);
+        copyPromptBtn.textContent = 'Copied!';
+        showSuccess('Prompt copied to clipboard!', { duration: 3000 });
+        setTimeout(() => {
+          copyPromptBtn.textContent = 'Copy to Clipboard';
+        }, 2000);
+      } catch (err) {
+        console.error('Copy failed:', err);
+        showError('Failed to copy to clipboard. Please copy manually.', { duration: 5000 });
+      }
+    });
+
+    // Download ZIP handler
+    const downloadZipBtn = document.getElementById('download-zip-btn') as HTMLButtonElement;
+    const downloadBtnState = createButtonState(downloadZipBtn, 'Download ZIP');
+
+    downloadZipBtn?.addEventListener('click', async () => {
+      if (!projectData || !projectData.sanitizedName) {
+        showError('No project data available. Please generate the project first.');
+        return;
+      }
+
+      try {
+        downloadBtnState.setLoading('Creating ZIP...');
+
+        const response = await fetch(`/api/download-zip?project=${encodeURIComponent(projectData.sanitizedName)}`);
+
+        if (!response.ok) {
+          throw new Error('Download failed');
+        }
+
+        // Create download link
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${projectData.sanitizedName}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        downloadBtnState.setSuccess('✓ Downloaded!', 3000);
+        showSuccess(`Project "${projectData.sanitizedName}.zip" downloaded successfully!`, { duration: 5000 });
+
+      } catch (err) {
+        console.error('Download error:', err);
+        downloadBtnState.setError('Try Again', 3000);
+        showError(`Failed to download project. You can manually copy files from: ${projectData.projectPath}`, {
+          duration: 0,
+          action: {
+            label: 'Copy Path',
+            callback: () => {
+              navigator.clipboard.writeText(projectData.projectPath);
+              showSuccess('Path copied to clipboard!');
+            }
+          }
+        });
+      }
+    });
+
+    // Start over handler
+    startOverBtn?.addEventListener('click', () => {
+      // Clear session storage
+      sessionStorage.clear();
+      // Reload page
+      window.location.reload();
+    });
+
+    // Previous button handlers
+    const previousGeneratingBtn = document.getElementById('step4-previous-generating');
+    const previousErrorBtn = document.getElementById('step4-previous-error');
+
+    previousGeneratingBtn?.addEventListener('click', () => {
+      window.dispatchEvent(new CustomEvent('wizard:previous'));
+    });
+
+    previousErrorBtn?.addEventListener('click', () => {
+      window.dispatchEvent(new CustomEvent('wizard:previous'));
+    });
+
+    // Retry generation
+    const retryBtn = document.getElementById('retry-generation-btn');
+    retryBtn?.addEventListener('click', () => {
+      errorSection?.classList.add('hidden');
+      progressSection?.classList.remove('hidden');
+      generateProject();
+    });
+
+    // Listen for when this step becomes active
+    window.addEventListener('step:4:active', () => {
+      const projectGenerated = sessionStorage.getItem('projectGenerated');
+
+      // Only generate once
+      if (!projectGenerated) {
+        sessionStorage.setItem('projectGenerated', 'true');
+        generateProject();
+      }
+    });
+
+    // If step 4 is already visible (in case event fired before listener was added)
+    const step4El = document.getElementById('step-4');
+    if (step4El && !step4El.classList.contains('hidden')) {
+      if (!sessionStorage.getItem('projectGenerated')) {
+        sessionStorage.setItem('projectGenerated', 'true');
+        generateProject();
+      }
+    }
+  });
+</script>

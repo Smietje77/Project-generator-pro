@@ -34,7 +34,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     // Parse request body
     const body = await request.json();
-    const { projectName, description, projectType } = body;
+    const { projectName, description, projectType, discoveryData } = body;
 
     // Validate required fields
     if (!projectName || !description || !projectType) {
@@ -47,13 +47,14 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    console.log('[AI Suggest] Generating suggestions for:', projectName);
+    console.log('[AI Suggest] Generating suggestions for:', projectName, discoveryData ? '(with discovery data)' : '');
 
     // Call Claude AI to generate suggestions
     const suggestions = await claudeClient.generateTechStackSuggestions({
       projectName,
       description,
-      projectType
+      projectType,
+      discoveryData
     });
 
     console.log('[AI Suggest] Generated suggestions:', suggestions);
