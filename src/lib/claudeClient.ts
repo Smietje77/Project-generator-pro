@@ -43,6 +43,8 @@ export class ClaudeClient {
 
 List 5 features, tech stacks, and complexity (simple/moderate/complex).
 
+CRITICAL: OUTPUT ONLY THE JSON, NO EXPLANATIONS OR TEXT BEFORE/AFTER!
+
 JSON: {"suggestedFeatures": ["f1","f2"], "techRecommendations": {"frontend": ["t1"], "backend": ["t2"], "database": ["t3"]}, "complexityEstimate": "moderate"}`
       }]
     });
@@ -50,8 +52,12 @@ JSON: {"suggestedFeatures": ["f1","f2"], "techRecommendations": {"frontend": ["t
     const content = response.content[0];
     if (content.type === 'text') {
       try {
-        return JSON.parse(content.text);
-      } catch {
+        // Extract JSON from response (handle cases where Haiku adds text)
+        const jsonText = this.extractJSON(content.text);
+        return JSON.parse(jsonText);
+      } catch (error) {
+        console.error('[AI Analysis] Failed to parse:', error);
+        console.error('[AI Analysis] Raw response:', content.text);
         // Fallback if JSON parsing fails
         return {
           suggestedFeatures: [],
@@ -92,6 +98,8 @@ Frontend: react/vue/astro/svelte/next
 Backend: node/bun/python/go/none
 Database: postgresql/mysql/mongodb/supabase/none
 
+CRITICAL: OUTPUT ONLY THE JSON, NO EXPLANATIONS OR TEXT BEFORE/AFTER!
+
 JSON: {"features": ["f1","f2"], "techStack": {"frontend": "x", "backend": "y", "database": "z"}, "reasoning": "why"}`
       }]
     });
@@ -99,7 +107,9 @@ JSON: {"features": ["f1","f2"], "techStack": {"frontend": "x", "backend": "y", "
     const content = response.content[0];
     if (content.type === 'text') {
       try {
-        const parsed = JSON.parse(content.text);
+        // Extract JSON from response (handle cases where Haiku adds text)
+        const jsonText = this.extractJSON(content.text);
+        const parsed = JSON.parse(jsonText);
 
         // Validate response structure
         if (!parsed.features || !parsed.techStack || !parsed.reasoning) {
@@ -108,7 +118,8 @@ JSON: {"features": ["f1","f2"], "techStack": {"frontend": "x", "backend": "y", "
 
         return parsed;
       } catch (error) {
-        console.error('Failed to parse AI response:', error);
+        console.error('[AI Tech Stack] Failed to parse:', error);
+        console.error('[AI Tech Stack] Raw response:', content.text);
         // Return sensible defaults based on project type
         return this.getDefaultSuggestions(input.projectType);
       }
@@ -187,6 +198,8 @@ RULES:
 - Only add database MCPs if database is in tech stack
 - Be minimal - only recommend what's essential
 
+CRITICAL: OUTPUT ONLY THE JSON, NO EXPLANATIONS OR TEXT BEFORE/AFTER!
+
 JSON format:
 {"recommendations": [{"id": "mcp-id", "required": true/false, "reasoning": "why needed"}]}`
       }]
@@ -195,14 +208,8 @@ JSON format:
     const content = response.content[0];
     if (content.type === 'text') {
       try {
-        // Clean up response - remove markdown code blocks if present
-        let jsonText = content.text.trim();
-        if (jsonText.startsWith('```json')) {
-          jsonText = jsonText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-        } else if (jsonText.startsWith('```')) {
-          jsonText = jsonText.replace(/^```\s*/, '').replace(/\s*```$/, '');
-        }
-
+        // Extract JSON from response (handle cases where Haiku adds text)
+        const jsonText = this.extractJSON(content.text);
         const parsed = JSON.parse(jsonText);
 
         if (!parsed.recommendations || !Array.isArray(parsed.recommendations)) {
@@ -264,6 +271,40 @@ Respond in JSON:
     }
 
     throw new Error('Unexpected response format');
+  }
+
+  /**
+   * Extract JSON from text that might have explanations before/after
+   * Handles cases where Haiku adds text like "Based on... {JSON}"
+   */
+  private extractJSON(text: string): string {
+    // Remove markdown code blocks if present
+    let cleaned = text.trim();
+    if (cleaned.startsWith('```json')) {
+      cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    } else if (cleaned.startsWith('```')) {
+      cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    }
+
+    // Find first { or [ and last } or ]
+    const firstBrace = Math.min(
+      cleaned.indexOf('{') === -1 ? Infinity : cleaned.indexOf('{'),
+      cleaned.indexOf('[') === -1 ? Infinity : cleaned.indexOf('[')
+    );
+
+    const lastBrace = Math.max(
+      cleaned.lastIndexOf('}'),
+      cleaned.lastIndexOf(']')
+    );
+
+    if (firstBrace === Infinity || lastBrace === -1) {
+      // No JSON found, return original text and let it fail
+      return cleaned;
+    }
+
+    // Extract the JSON portion
+    const jsonText = cleaned.substring(firstBrace, lastBrace + 1);
+    return jsonText;
   }
 }
 

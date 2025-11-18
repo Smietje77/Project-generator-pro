@@ -128,7 +128,28 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       return isWindows ? 'E:\\root\\apps\\projects' : '/root/apps/projects';
     };
     const basePath = process.env.CLAUDE_PROJECTS_PATH || getDefaultPath();
-    const projectPath = path.join(basePath, sanitizedName);
+
+    // Check if base path exists, if not create it
+    if (!fs.existsSync(basePath)) {
+      try {
+        fs.mkdirSync(basePath, { recursive: true });
+      } catch (error) {
+        console.error('Base path creation error:', error);
+        throw new Error(`Failed to create base directory: ${basePath}`);
+      }
+    }
+
+    // Determine project path with collision handling
+    let projectPath = path.join(basePath, sanitizedName);
+    let finalName = sanitizedName;
+
+    // If directory exists, append timestamp to avoid conflicts
+    if (fs.existsSync(projectPath)) {
+      const timestamp = Date.now();
+      finalName = `${sanitizedName}-${timestamp}`;
+      projectPath = path.join(basePath, finalName);
+      console.log(`[Project Generation] Directory exists, using: ${finalName}`);
+    }
 
     try {
       // Create main directory
@@ -146,9 +167,12 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       directories.forEach(dir => {
         fs.mkdirSync(dir, { recursive: true });
       });
+
+      console.log(`[Project Generation] Created directory structure at: ${projectPath}`);
     } catch (error) {
       console.error('Directory creation error:', error);
-      throw new Error('Failed to create project directories');
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to create project directories at ${projectPath}: ${errorMsg}`);
     }
 
     try {
@@ -178,12 +202,12 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       fs.writeFileSync(mcpConfigPath, JSON.stringify(mcpConfig, null, 2), 'utf-8');
 
       // Write README.md
-      const readme = buildReadme(config, sanitizedName);
+      const readme = buildReadme(config, finalName);
       const readmePath = path.join(projectPath, 'README.md');
       fs.writeFileSync(readmePath, readme, 'utf-8');
 
       // Write package.json
-      const packageJson = buildPackageJson(config, sanitizedName);
+      const packageJson = buildPackageJson(config, finalName);
       const packagePath = path.join(projectPath, 'package.json');
       fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2), 'utf-8');
 
@@ -214,7 +238,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       data: {
         projectPath,
         promptPath: path.join(projectPath, '.claude', 'PROJECT_PROMPT.md'),
-        sanitizedName,
+        sanitizedName: finalName, // Use finalName which includes timestamp if directory existed
         prompt: generatedPrompt.markdown, // The generated prompt for display
         analysis: {
           totalAgents: analysisResult.requiredAgents.length,
