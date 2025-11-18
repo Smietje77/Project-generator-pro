@@ -5,9 +5,9 @@ import type { AnalysisResult, GeneratedPrompt, Agent, Task } from './types';
  */
 export class PromptGenerator {
   
-  generate(analysis: AnalysisResult): GeneratedPrompt {
-    const markdown = this.buildMarkdown(analysis);
-    
+  generate(analysis: AnalysisResult, discoveryData?: any): GeneratedPrompt {
+    const markdown = this.buildMarkdown(analysis, discoveryData);
+
     return {
       markdown,
       metadata: {
@@ -20,16 +20,24 @@ export class PromptGenerator {
     };
   }
 
-  private buildMarkdown(analysis: AnalysisResult): string {
+  private buildMarkdown(analysis: AnalysisResult, discoveryData?: any): string {
     const sections = [
       this.buildHeader(analysis),
       this.buildProjectContext(analysis),
+    ];
+
+    // Add discovery interview section if data exists
+    if (discoveryData && discoveryData.questions && discoveryData.answers) {
+      sections.push(this.buildDiscoverySection(discoveryData));
+    }
+
+    sections.push(
       this.buildMCPSection(analysis),
       this.buildAgentsSection(analysis),
       this.buildTaskBreakdown(analysis),
       this.buildCollaborationProtocol(analysis),
       this.buildFooter()
-    ];
+    );
 
     return sections.join('\n\n---\n\n');
   }
@@ -47,7 +55,7 @@ Generated: ${new Date().toISOString()}`;
 
   private buildProjectContext(analysis: AnalysisResult): string {
     const { project } = analysis;
-    
+
     let context = `## 📋 Project Context
 
 ### Description
@@ -69,6 +77,66 @@ ${project.features.map(f => `- **${f.name}** (${f.category})`).join('\n')}
     }
 
     return context;
+  }
+
+  private buildDiscoverySection(discoveryData: any): string {
+    const { questions, answers } = discoveryData;
+
+    let section = `## 💡 Discovery Interview Insights
+
+The following requirements and preferences were gathered through an AI-powered discovery interview:
+
+`;
+
+    // Group questions by category
+    const categories: Record<string, any[]> = {};
+    questions.forEach((q: any) => {
+      const category = q.category || 'other';
+      if (!categories[category]) {
+        categories[category] = [];
+      }
+      categories[category].push(q);
+    });
+
+    // Category display names and emojis
+    const categoryInfo: Record<string, { name: string; emoji: string }> = {
+      design: { name: 'Design & UX', emoji: '🎨' },
+      functionality: { name: 'Functionality', emoji: '⚡' },
+      data: { name: 'Data & Database', emoji: '🗄️' },
+      audience: { name: 'Target Audience', emoji: '👥' },
+      technical: { name: 'Technical Requirements', emoji: '🔧' },
+      other: { name: 'Additional Details', emoji: '📝' }
+    };
+
+    // Render each category
+    Object.entries(categories).forEach(([category, categoryQuestions]) => {
+      const info = categoryInfo[category] || categoryInfo.other;
+      section += `### ${info.emoji} ${info.name}\n\n`;
+
+      categoryQuestions.forEach((q: any) => {
+        const answer = answers[q.id];
+
+        // Skip if no answer provided
+        if (!answer || (Array.isArray(answer) && answer.length === 0)) {
+          return;
+        }
+
+        section += `**Q: ${q.question}**  \n`;
+
+        // Format answer based on type
+        if (Array.isArray(answer)) {
+          // Checkbox answers
+          section += `A: ${answer.join(', ')}\n\n`;
+        } else {
+          // Single value (text, textarea, radio)
+          section += `A: ${answer}\n\n`;
+        }
+      });
+    });
+
+    section += `*These insights should guide all implementation decisions and ensure the final product matches user expectations.*`;
+
+    return section;
   }
 
   private buildMCPSection(analysis: AnalysisResult): string {

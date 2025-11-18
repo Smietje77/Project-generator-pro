@@ -54,7 +54,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    const { config: rawConfig, analysis: requestAnalysis, templateId } = body;
+    const { config: rawConfig, analysis: requestAnalysis, templateId, discoveryData } = body;
+
+    console.log('[API:Generate] Discovery data present:', !!discoveryData);
 
     // Validate required data
     if (!rawConfig || typeof rawConfig !== 'object') {
@@ -170,7 +172,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     let generatedPrompt;
     try {
       const promptGen = new PromptGenerator();
-      generatedPrompt = promptGen.generate(analysisResult);
+      generatedPrompt = promptGen.generate(analysisResult, discoveryData);
       console.log('[API:Generate] Prompt generated:', generatedPrompt.markdown.length, 'characters');
     } catch (error) {
       console.error('[API:Generate] Prompt generation failed:', error);

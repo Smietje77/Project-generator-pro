@@ -242,8 +242,11 @@ import Alert from './ui/Alert.astro';
         } else {
           // Regular custom project generation
           const step2Data = JSON.parse(sessionStorage.getItem('step2Data') || '{}');
+          const discoveryData = JSON.parse(sessionStorage.getItem('aiDiscoveryData') || 'null');
           const step3Customizations = JSON.parse(sessionStorage.getItem('step3Customizations') || '{}');
           const analysisData = JSON.parse(sessionStorage.getItem('analysisData') || '{}');
+
+          console.log('[Step5] Discovery data:', discoveryData);
 
           showInfo('🚀 Generating custom project...', { duration: 3000 });
 
@@ -264,7 +267,9 @@ import Alert from './ui/Alert.astro';
               features: step2Data.features || [],
               techStack: step2Data.techStack || {},
               additionalRequirements: step2Data.additionalRequirements,
+              estimatedComplexity: step2Data.estimatedComplexity || 'moderate',
             },
+            discoveryData: discoveryData, // Include discovery interview data
             customizations: step3Customizations,
             analysis: analysisData,
           };
