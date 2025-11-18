@@ -107,12 +107,15 @@ Build Command: npm install && npm run build
 Start Command: node ./dist/server/entry.mjs
 Output Directory: dist
 Node Version: 20
+Install Dev Dependencies: YES (required for @astrojs/check)
 ```
 
 **Important Notes:**
 - Astro uses `@astrojs/node` adapter for SSR
 - The entry point is generated during build: `dist/server/entry.mjs`
 - Make sure "Server-side Rendering" is enabled in Dokploy
+- Build script runs `astro build` (TypeScript type checking is handled during compilation)
+- The `@astrojs/check` package must be installed as a devDependency
 
 ### Step 5: Add Environment Variables
 
