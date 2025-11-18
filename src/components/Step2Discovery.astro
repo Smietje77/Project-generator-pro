@@ -416,47 +416,62 @@ import Button from './ui/Button.astro';
     });
   }
 
-  // Load saved data if exists
-  const savedData = sessionStorage.getItem('aiDiscoveryData');
-  if (savedData) {
-    try {
-      const data = JSON.parse(savedData);
-      questionsData = data.questions;
-      displayQuestions(data.questions, 'Previously answered questions');
+  // Initialize when step becomes active
+  let hasInitialized = false;
 
-      // Restore answers
-      Object.entries(data.answers).forEach(([questionId, answer]) => {
-        if (Array.isArray(answer)) {
-          // Checkboxes
-          answer.forEach((value: string) => {
-            const checkbox = form?.querySelector(`input[name="${questionId}"][value="${value}"]`) as HTMLInputElement;
-            if (checkbox) checkbox.checked = true;
-          });
-        } else if (answer) {
-          const input = form?.querySelector(`[name="${questionId}"]`) as HTMLInputElement | HTMLTextAreaElement;
-          if (input) {
-            if (input.type === 'radio') {
-              const radio = form?.querySelector(`input[name="${questionId}"][value="${answer}"]`) as HTMLInputElement;
-              if (radio) radio.checked = true;
-            } else {
-              input.value = answer as string;
+  // Listen for step activation
+  window.addEventListener('step:2:active', () => {
+    console.log('[Discovery] Step 2 activated');
+
+    if (hasInitialized) {
+      console.log('[Discovery] Already initialized, skipping');
+      return;
+    }
+
+    hasInitialized = true;
+
+    // Load saved data if exists
+    const savedData = sessionStorage.getItem('aiDiscoveryData');
+    if (savedData) {
+      try {
+        const data = JSON.parse(savedData);
+        questionsData = data.questions;
+        displayQuestions(data.questions, 'Previously answered questions');
+
+        // Restore answers
+        Object.entries(data.answers).forEach(([questionId, answer]) => {
+          if (Array.isArray(answer)) {
+            // Checkboxes
+            answer.forEach((value: string) => {
+              const checkbox = form?.querySelector(`input[name="${questionId}"][value="${value}"]`) as HTMLInputElement;
+              if (checkbox) checkbox.checked = true;
+            });
+          } else if (answer) {
+            const input = form?.querySelector(`[name="${questionId}"]`) as HTMLInputElement | HTMLTextAreaElement;
+            if (input) {
+              if (input.type === 'radio') {
+                const radio = form?.querySelector(`input[name="${questionId}"][value="${answer}"]`) as HTMLInputElement;
+                if (radio) radio.checked = true;
+              } else {
+                input.value = answer as string;
+              }
             }
           }
-        }
-      });
+        });
 
-      updateProgress();
+        updateProgress();
 
-      // Hide loading, show form
-      loadingState?.classList.add('hidden');
-      form?.classList.remove('hidden');
-    } catch (error) {
-      console.error('[Discovery] Error loading saved data:', error);
-      // If error loading saved data, generate new questions
+        // Hide loading, show form
+        loadingState?.classList.add('hidden');
+        form?.classList.remove('hidden');
+      } catch (error) {
+        console.error('[Discovery] Error loading saved data:', error);
+        // If error loading saved data, generate new questions
+        generateQuestions();
+      }
+    } else {
+      // Generate questions on initial load
       generateQuestions();
     }
-  } else {
-    // Generate questions on initial load
-    generateQuestions();
-  }
+  });
 </script>
