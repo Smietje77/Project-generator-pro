@@ -249,24 +249,34 @@ const databaseOptions = [
         // Apply suggestions to form
         const { features, techStack, reasoning } = result.data;
 
+        console.log('[Step3] AI Suggestions received:', { features, techStack, reasoning });
+
         // Check feature checkboxes
         if (features && Array.isArray(features)) {
           // First uncheck all
           const allCheckboxes = form.querySelectorAll('input[name="features"]') as NodeListOf<HTMLInputElement>;
           allCheckboxes.forEach(cb => cb.checked = false);
 
+          console.log('[Step3] Applying features:', features);
+
           // Then check suggested ones
+          let appliedCount = 0;
           features.forEach((featureId: string) => {
             const checkbox = form.querySelector(`input[value="${featureId}"]`) as HTMLInputElement;
             if (checkbox) {
               checkbox.checked = true;
+              appliedCount++;
               // Add visual feedback
               checkbox.parentElement?.classList.add('border-primary-500', 'bg-primary-50');
               setTimeout(() => {
                 checkbox.parentElement?.classList.remove('border-primary-500', 'bg-primary-50');
               }, 1000);
+            } else {
+              console.warn('[Step3] Feature not found:', featureId);
             }
           });
+
+          console.log('[Step3] Applied', appliedCount, 'of', features.length, 'features');
         }
 
         // Set tech stack dropdowns

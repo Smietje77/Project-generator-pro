@@ -106,14 +106,21 @@ JSON: {"suggestedFeatures": ["f1","f2"], "techRecommendations": {"frontend": ["t
 
     prompt += `
 
-Pick from: auth, database, api, upload, email, payment, analytics, testing
-Frontend: react/vue/astro/svelte/next
-Backend: node/bun/python/go/none
-Database: postgresql/mysql/mongodb/supabase/none
+AVAILABLE OPTIONS (use EXACT IDs):
+Features: auth, database, api, upload, email, payment, analytics, testing
+Frontend: react, vue, astro, svelte, next
+Backend: node, bun, python, go, none
+Database: postgresql, mysql, mongodb, supabase, none
 
-CRITICAL: OUTPUT ONLY THE JSON, NO EXPLANATIONS OR TEXT BEFORE/AFTER!
+RULES:
+1. Features MUST be from the exact list above (auth/database/api/upload/email/payment/analytics/testing)
+2. Do NOT invent new feature names
+3. Output ONLY valid JSON
+4. No text before or after JSON
 
-JSON: {"features": ["f1","f2"], "techStack": {"frontend": "x", "backend": "y", "database": "z"}, "reasoning": "why"}`;
+Example: {"features": ["auth","database","api"], "techStack": {"frontend": "react", "backend": "node", "database": "postgresql"}, "reasoning": "Needs user login, data storage, and API endpoints"}
+
+JSON:`;
 
     const response = await this.getClient().messages.create({
       model: 'claude-3-5-haiku-20241022', // Using Haiku for faster suggestions
