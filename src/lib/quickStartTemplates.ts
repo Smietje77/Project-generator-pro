@@ -9,6 +9,7 @@ export interface QuickStartTemplate {
   config: Partial<ProjectConfig>;
   popularity: number; // 1-5 for sorting
   tags: string[];
+  category: 'web' | 'api' | 'tool' | 'other'; // For filtering
 }
 
 /**
@@ -24,6 +25,7 @@ export const QUICK_START_TEMPLATES: QuickStartTemplate[] = [
     estimatedTime: '15-30 seconds',
     popularity: 5,
     tags: ['saas', 'authentication', 'payments', 'dashboard'],
+    category: 'web',
     config: {
       type: 'saas',
       features: [
@@ -57,6 +59,7 @@ export const QUICK_START_TEMPLATES: QuickStartTemplate[] = [
     estimatedTime: '15-20 seconds',
     popularity: 4,
     tags: ['api', 'microservice', 'backend', 'rest'],
+    category: 'api',
     config: {
       type: 'api',
       features: [
@@ -89,6 +92,7 @@ export const QUICK_START_TEMPLATES: QuickStartTemplate[] = [
     estimatedTime: '10-15 seconds',
     popularity: 5,
     tags: ['website', 'landing', 'marketing', 'seo'],
+    category: 'web',
     config: {
       type: 'website',
       features: [
@@ -120,6 +124,7 @@ export const QUICK_START_TEMPLATES: QuickStartTemplate[] = [
     estimatedTime: '20-30 seconds',
     popularity: 4,
     tags: ['ecommerce', 'shop', 'payments', 'inventory'],
+    category: 'web',
     config: {
       type: 'saas',
       features: [
@@ -147,6 +152,7 @@ export const QUICK_START_TEMPLATES: QuickStartTemplate[] = [
   },
   {
     id: 'blog-platform',
+    category: 'web',
     name: 'Blog Platform',
     icon: '📝',
     description: 'Content management system with Markdown support, comments, and SEO',
@@ -178,6 +184,7 @@ export const QUICK_START_TEMPLATES: QuickStartTemplate[] = [
   },
   {
     id: 'admin-dashboard',
+    category: 'web',
     name: 'Admin Dashboard',
     icon: '📊',
     description: 'Data visualization dashboard with real-time updates and user management',
@@ -209,6 +216,7 @@ export const QUICK_START_TEMPLATES: QuickStartTemplate[] = [
   },
   {
     id: 'cli-tool',
+    category: 'tool',
     name: 'CLI Tool',
     icon: '💻',
     description: 'Command-line tool with interactive prompts and configuration management',
@@ -239,6 +247,7 @@ export const QUICK_START_TEMPLATES: QuickStartTemplate[] = [
   },
   {
     id: 'mobile-backend',
+    category: 'api',
     name: 'Mobile App Backend',
     icon: '📱',
     description: 'API backend for mobile apps with push notifications and real-time sync',
@@ -270,6 +279,7 @@ export const QUICK_START_TEMPLATES: QuickStartTemplate[] = [
   },
   {
     id: 'chrome-extension',
+    category: 'tool',
     name: 'Chrome Extension',
     icon: '🔌',
     description: 'Browser extension with popup, background scripts, and content injection',
@@ -301,6 +311,7 @@ export const QUICK_START_TEMPLATES: QuickStartTemplate[] = [
   },
   {
     id: 'discord-bot',
+    category: 'other',
     name: 'Discord Bot',
     icon: '🤖',
     description: 'Discord bot with slash commands, events, and database integration',
@@ -332,6 +343,7 @@ export const QUICK_START_TEMPLATES: QuickStartTemplate[] = [
   },
   {
     id: 'vscode-extension',
+    category: 'tool',
     name: 'VS Code Extension',
     icon: '🎯',
     description: 'Visual Studio Code extension with commands, snippets, and language support',
@@ -363,6 +375,7 @@ export const QUICK_START_TEMPLATES: QuickStartTemplate[] = [
   },
   {
     id: 'docs-site',
+    category: 'web',
     name: 'Documentation Site',
     icon: '📚',
     description: 'Documentation website with search, versioning, and API reference',
@@ -394,6 +407,7 @@ export const QUICK_START_TEMPLATES: QuickStartTemplate[] = [
   },
   {
     id: 'portfolio',
+    category: 'web',
     name: 'Portfolio Website',
     icon: '👨‍💻',
     description: 'Personal portfolio with projects showcase, blog, and contact form',
@@ -425,6 +439,7 @@ export const QUICK_START_TEMPLATES: QuickStartTemplate[] = [
   },
   {
     id: 'data-pipeline',
+    category: 'other',
     name: 'Data Pipeline',
     icon: '⚙️',
     description: 'ETL pipeline for data processing, transformation, and scheduling',
@@ -479,6 +494,35 @@ export function getTemplatesByTag(tag: string): QuickStartTemplate[] {
   return QUICK_START_TEMPLATES.filter(t =>
     t.tags.some(tTag => tTag.toLowerCase().includes(tag.toLowerCase()))
   );
+}
+
+/**
+ * Get templates by category
+ */
+export function getTemplatesByCategory(category: 'web' | 'api' | 'tool' | 'other' | 'all'): QuickStartTemplate[] {
+  if (category === 'all') {
+    return QUICK_START_TEMPLATES;
+  }
+  return QUICK_START_TEMPLATES.filter(t => t.category === category);
+}
+
+/**
+ * Get category counts
+ */
+export function getCategoryCounts(): Record<string, number> {
+  const counts: Record<string, number> = {
+    all: QUICK_START_TEMPLATES.length,
+    web: 0,
+    api: 0,
+    tool: 0,
+    other: 0
+  };
+
+  QUICK_START_TEMPLATES.forEach(t => {
+    counts[t.category]++;
+  });
+
+  return counts;
 }
 
 /**

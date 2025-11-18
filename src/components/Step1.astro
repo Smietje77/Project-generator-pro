@@ -34,7 +34,26 @@ const sortedTemplates = [...QUICK_START_TEMPLATES].sort((a, b) => b.popularity -
         </span>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <!-- Category Filters -->
+      <div class="flex flex-wrap gap-2 mb-4">
+        <button class="category-filter active px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-indigo-600 text-white" data-category="all">
+          All <span class="ml-1 opacity-75">(14)</span>
+        </button>
+        <button class="category-filter px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-gray-100 text-gray-700 hover:bg-gray-200" data-category="web">
+          🌐 Websites <span class="ml-1 opacity-75">(7)</span>
+        </button>
+        <button class="category-filter px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-gray-100 text-gray-700 hover:bg-gray-200" data-category="api">
+          ⚡ APIs <span class="ml-1 opacity-75">(2)</span>
+        </button>
+        <button class="category-filter px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-gray-100 text-gray-700 hover:bg-gray-200" data-category="tool">
+          🔧 Dev Tools <span class="ml-1 opacity-75">(3)</span>
+        </button>
+        <button class="category-filter px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-gray-100 text-gray-700 hover:bg-gray-200" data-category="other">
+          🤖 Automation <span class="ml-1 opacity-75">(2)</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="templates-grid">
         {sortedTemplates.map((template) => (
           <button
             type="button"
@@ -42,6 +61,7 @@ const sortedTemplates = [...QUICK_START_TEMPLATES].sort((a, b) => b.popularity -
             data-template-id={template.id}
             data-template-name={template.name}
             data-template-description={template.description}
+            data-category={template.category}
           >
             <div class="absolute top-2 right-2">
               <span class="text-xs text-gray-500">{template.estimatedTime}</span>
@@ -131,8 +151,36 @@ const sortedTemplates = [...QUICK_START_TEMPLATES].sort((a, b) => b.popularity -
 </Card>
 
 <script>
-  // Template selection handling (no imports needed - template ID is stored in sessionStorage)
+  // Category filtering
+  const categoryFilters = document.querySelectorAll('.category-filter');
   const templateCards = document.querySelectorAll('.template-card');
+
+  categoryFilters.forEach(filter => {
+    filter.addEventListener('click', (e) => {
+      const target = e.currentTarget as HTMLElement;
+      const category = target.dataset.category;
+
+      // Update active state
+      categoryFilters.forEach(f => {
+        f.classList.remove('active', 'bg-indigo-600', 'text-white');
+        f.classList.add('bg-gray-100', 'text-gray-700');
+      });
+      target.classList.add('active', 'bg-indigo-600', 'text-white');
+      target.classList.remove('bg-gray-100', 'text-gray-700');
+
+      // Filter templates
+      templateCards.forEach(card => {
+        const cardCategory = (card as HTMLElement).dataset.category;
+        if (category === 'all' || cardCategory === category) {
+          (card as HTMLElement).style.display = '';
+        } else {
+          (card as HTMLElement).style.display = 'none';
+        }
+      });
+    });
+  });
+
+  // Template selection handling (no imports needed - template ID is stored in sessionStorage)
 
   templateCards.forEach(card => {
     card.addEventListener('click', async (e) => {
