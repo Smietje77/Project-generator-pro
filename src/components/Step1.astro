@@ -151,6 +151,8 @@ const sortedTemplates = [...QUICK_START_TEMPLATES].sort((a, b) => b.popularity -
 </Card>
 
 <script>
+  import { showSuccess, showInfo } from '../lib/notifications';
+
   // Category filtering
   const categoryFilters = document.querySelectorAll('.category-filter');
   const templateCards = document.querySelectorAll('.template-card');
@@ -272,6 +274,9 @@ const sortedTemplates = [...QUICK_START_TEMPLATES].sort((a, b) => b.popularity -
         // Remove modal
         quickForm.remove();
 
+        // Show success notification
+        showSuccess(`Template "${templateName}" selected! Starting quick generation...`, { duration: 3000 });
+
         // Dispatch event to jump to generation
         window.dispatchEvent(new CustomEvent('wizard:jumpToGeneration'));
       });
@@ -317,6 +322,9 @@ const sortedTemplates = [...QUICK_START_TEMPLATES].sort((a, b) => b.popularity -
       sessionStorage.removeItem('templateId');
       sessionStorage.removeItem('skipToGeneration');
       sessionStorage.removeItem('projectGenerated');
+
+      // Show success notification
+      showInfo('Project details saved! Moving to feature selection...', { duration: 3000 });
 
       // Dispatch event to parent to move to next step
       window.dispatchEvent(new CustomEvent('wizard:next'));

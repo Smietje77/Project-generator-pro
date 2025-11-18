@@ -208,6 +208,7 @@ import Alert from './ui/Alert.astro';
         if (templateId && skipToGeneration === 'true') {
           // Quick Start Template generation - faster path
           console.log('[Step4] Using Quick Start Template:', templateId);
+          showInfo('⚡ Generating project from template...', { duration: 3000 });
 
           // Faster progress updates for templates
           updateProgress(1, '⚡ Loading template configuration...');
@@ -234,6 +235,7 @@ import Alert from './ui/Alert.astro';
           const analysisData = JSON.parse(sessionStorage.getItem('analysisData') || '{}');
 
           console.log('[Step4] Custom project data:', { step1Data, step2Data, step3Customizations, analysisData });
+          showInfo('🚀 Generating custom project...', { duration: 3000 });
 
           // Regular progress updates
           updateProgress(1, 'Creating project structure...');
@@ -284,6 +286,7 @@ import Alert from './ui/Alert.astro';
 
         // Show success
         displaySuccess(result.data);
+        showSuccess(`Project "${step1Data.projectName}" generated successfully!`, { duration: 5000 });
 
         // Clear template flags after successful generation
         if (templateId) {
@@ -295,6 +298,7 @@ import Alert from './ui/Alert.astro';
         console.error('Generation error:', err);
         progressSection?.classList.add('hidden');
         errorSection?.classList.remove('hidden');
+        showError(`Failed to generate project: ${err instanceof Error ? err.message : 'Unknown error'}`, { duration: 0 });
       }
     }
 
@@ -328,6 +332,8 @@ import Alert from './ui/Alert.astro';
         githubPushBtn.setAttribute('disabled', 'true');
         githubPushBtn.innerHTML = '<span class="inline-flex items-center gap-2"><svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle></svg>Pushing to GitHub...</span>';
 
+        showInfo('Pushing project to GitHub...', { duration: 3000 });
+
         // Get project details
         const step1Data = JSON.parse(sessionStorage.getItem('step1Data') || '{}');
 
@@ -357,11 +363,22 @@ import Alert from './ui/Alert.astro';
           githubLink.href = data.githubUrl;
         }
 
+        showSuccess(`Successfully pushed to GitHub! Repository: ${data.repoName || step1Data.projectName}`, {
+          duration: 7000,
+          action: {
+            label: 'View Repository',
+            callback: () => {
+              if (data.githubUrl) window.open(data.githubUrl, '_blank');
+            }
+          }
+        });
+
       } catch (err) {
         console.error('GitHub push error:', err);
         githubError?.classList.remove('hidden');
         githubPushBtn?.removeAttribute('disabled');
         githubPushBtn!.innerHTML = 'Push to GitHub';
+        showError(`Failed to push to GitHub: ${err instanceof Error ? err.message : 'Unknown error'}`, { duration: 0 });
       }
     });
 
@@ -371,11 +388,13 @@ import Alert from './ui/Alert.astro';
       try {
         await navigator.clipboard.writeText(promptText);
         copyPromptBtn.textContent = 'Copied!';
+        showSuccess('Prompt copied to clipboard!', { duration: 3000 });
         setTimeout(() => {
           copyPromptBtn.textContent = 'Copy to Clipboard';
         }, 2000);
       } catch (err) {
         console.error('Copy failed:', err);
+        showError('Failed to copy to clipboard. Please copy manually.', { duration: 5000 });
       }
     });
 
@@ -410,6 +429,7 @@ import Alert from './ui/Alert.astro';
 
         downloadZipBtn.removeAttribute('disabled');
         downloadZipBtn.innerHTML = 'Download ZIP';
+        showSuccess(`Project "${projectData.sanitizedName}.zip" downloaded successfully!`, { duration: 5000 });
 
       } catch (err) {
         console.error('Download error:', err);

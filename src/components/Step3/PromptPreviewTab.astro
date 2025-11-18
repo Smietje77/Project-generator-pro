@@ -97,6 +97,8 @@ Loading prompt preview...
 </style>
 
 <script>
+  import { showSuccess, showError } from '../../lib/notifications';
+
   // Prompt preview functionality will be added to main Step3 script
   window.addEventListener('step3:prompt-ready', ((event: CustomEvent) => {
     const { prompt, analysis } = event.detail;
@@ -168,8 +170,10 @@ Loading prompt preview...
             btn.textContent = originalText;
           }, 2000);
         }
+        showSuccess('Prompt preview copied to clipboard!', { duration: 3000 });
       } catch (err) {
         console.error('Failed to copy:', err);
+        showError('Failed to copy to clipboard. Please try again.', { duration: 5000 });
       }
     }
   });
@@ -178,15 +182,21 @@ Loading prompt preview...
   document.getElementById('download-prompt-btn')?.addEventListener('click', () => {
     const promptContent = document.getElementById('prompt-preview-content');
     if (promptContent) {
-      const blob = new Blob([promptContent.textContent || ''], { type: 'text/markdown' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'PROJECT_PROMPT.md';
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      try {
+        const blob = new Blob([promptContent.textContent || ''], { type: 'text/markdown' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'PROJECT_PROMPT.md';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        showSuccess('PROJECT_PROMPT.md downloaded successfully!', { duration: 3000 });
+      } catch (err) {
+        console.error('Download failed:', err);
+        showError('Failed to download file. Please try again.', { duration: 5000 });
+      }
     }
   });
 </script>
