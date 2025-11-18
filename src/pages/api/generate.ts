@@ -99,7 +99,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     // Step 3: Create project directory structure
     // Use environment variable for base path (works in both dev and production)
-    const basePath = process.env.CLAUDE_PROJECTS_PATH || '/root/apps/Projects';
+    const basePath = process.env.CLAUDE_PROJECTS_PATH || 'E:\\root\\apps\\projects';
     const projectPath = path.join(basePath, sanitizedName);
 
     try {
