@@ -23,22 +23,50 @@ import * as path from 'path';
  * - 500: { success: false, error: string }
  */
 export const POST: APIRoute = async ({ request, cookies }) => {
+  const startTime = Date.now();
+
   try {
     // Authentication check
     const authToken = cookies.get('auth_token');
     if (authToken?.value !== 'authenticated') {
+      console.warn('[API:Generate] Unauthorized access attempt');
       return new Response(JSON.stringify({
         success: false,
-        error: 'Unauthorized'
+        error: 'Unauthorized. Please refresh the page and try again.'
       } as APIResponse), {
         status: 401,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    // Parse request body
-    const body = await request.json();
+    // Parse request body with validation
+    let body: any;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      console.error('[API:Generate] Failed to parse request body:', parseError);
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Invalid request format. Please try again.'
+      } as APIResponse), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     const { config: rawConfig, analysis: requestAnalysis, templateId } = body;
+
+    // Validate required data
+    if (!rawConfig || typeof rawConfig !== 'object') {
+      console.error('[API:Generate] Missing or invalid config');
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Project configuration is missing. Please complete all wizard steps.'
+      } as APIResponse), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
     let config: ProjectConfig;
 
@@ -85,10 +113,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     // Validate config
-    if (!config || !config.name) {
+    if (!config || !config.name || !config.description) {
+      console.error('[API:Generate] Invalid project config:', { hasName: !!config?.name, hasDescription: !!config?.description });
       return new Response(JSON.stringify({
         success: false,
-        error: 'Missing project configuration'
+        error: 'Project name and description are required. Please go back and complete Step 1.'
       } as APIResponse), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
@@ -104,22 +133,55 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       .trim();
 
     if (!sanitizedName) {
+      console.error('[API:Generate] Project name sanitization failed:', config.name);
       return new Response(JSON.stringify({
         success: false,
-        error: 'Invalid project name'
+        error: 'Invalid project name. Please use only letters, numbers, spaces, and hyphens.'
       } as APIResponse), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
+    console.log('[API:Generate] Starting generation for:', sanitizedName);
+
     // Step 1: Analyze project (always analyze from scratch to ensure consistency)
-    const analyzer = new ProjectAnalyzer();
-    const analysisResult = await analyzer.analyze(config);
+    let analysisResult;
+    try {
+      const analyzer = new ProjectAnalyzer();
+      analysisResult = await analyzer.analyze(config);
+      console.log('[API:Generate] Analysis complete:', {
+        agents: analysisResult.requiredAgents.length,
+        mcps: analysisResult.recommendedMCPs.length,
+        tasks: analysisResult.taskBreakdown.length
+      });
+    } catch (error) {
+      console.error('[API:Generate] Analysis failed:', error);
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Failed to analyze project requirements. Please try again or simplify your project description.'
+      } as APIResponse), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
     // Step 2: Generate prompt
-    const promptGen = new PromptGenerator();
-    const generatedPrompt = promptGen.generate(analysisResult);
+    let generatedPrompt;
+    try {
+      const promptGen = new PromptGenerator();
+      generatedPrompt = promptGen.generate(analysisResult);
+      console.log('[API:Generate] Prompt generated:', generatedPrompt.markdown.length, 'characters');
+    } catch (error) {
+      console.error('[API:Generate] Prompt generation failed:', error);
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Failed to generate project prompt. Please try again.'
+      } as APIResponse), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
     // Step 3: Create project directory structure
     // Use environment variable for base path, or auto-detect based on platform
@@ -168,11 +230,39 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         fs.mkdirSync(dir, { recursive: true });
       });
 
-      console.log(`[Project Generation] Created directory structure at: ${projectPath}`);
+      console.log(`[API:Generate] Created directory structure at: ${projectPath}`);
     } catch (error) {
-      console.error('Directory creation error:', error);
+      console.error('[API:Generate] Directory creation error:', error);
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Failed to create project directories at ${projectPath}: ${errorMsg}`);
+
+      // Check for specific error types
+      if (errorMsg.includes('ENOSPC')) {
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'Not enough disk space. Please free up some space and try again.'
+        } as APIResponse), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      if (errorMsg.includes('EACCES') || errorMsg.includes('EPERM')) {
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'Permission denied. Please check folder permissions or try a different location.'
+        } as APIResponse), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      return new Response(JSON.stringify({
+        success: false,
+        error: `Failed to create project directories: ${errorMsg}`
+      } as APIResponse), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
     try {
@@ -228,9 +318,21 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       fs.writeFileSync(indexPath, indexContent, 'utf-8');
 
     } catch (error) {
-      console.error('File write error:', error);
-      throw new Error('Failed to write project files');
+      console.error('[API:Generate] File write error:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+
+      return new Response(JSON.stringify({
+        success: false,
+        error: `Failed to write project files: ${errorMsg}. The project directory may have been partially created.`
+      } as APIResponse), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
+
+    // Calculate generation time
+    const generationTime = Date.now() - startTime;
+    console.log(`[API:Generate] ✅ Generation successful for "${finalName}" in ${generationTime}ms`);
 
     // Return successful response with prompt and project info
     return new Response(JSON.stringify({
@@ -244,7 +346,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
           totalAgents: analysisResult.requiredAgents.length,
           totalMCPs: analysisResult.recommendedMCPs.length,
           totalTasks: analysisResult.taskBreakdown.length
-        }
+        },
+        generationTime // Include performance metric
       }
     } as APIResponse), {
       status: 200,
@@ -252,11 +355,27 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     });
 
   } catch (error) {
-    console.error('Generation error:', error);
+    console.error('[API:Generate] ❌ Unexpected generation error:', error);
+
+    // Provide user-friendly error message
+    let userMessage = 'Project generation failed. Please try again.';
+
+    if (error instanceof Error) {
+      // Check for known error patterns
+      if (error.message.includes('ENOSPC')) {
+        userMessage = 'Not enough disk space. Please free up space and try again.';
+      } else if (error.message.includes('EACCES') || error.message.includes('EPERM')) {
+        userMessage = 'Permission denied. Please check folder permissions.';
+      } else if (error.message.includes('network') || error.message.includes('ECONNREFUSED')) {
+        userMessage = 'Network error. Please check your connection and try again.';
+      } else if (error.message.includes('timeout')) {
+        userMessage = 'Operation timed out. Please try again.';
+      }
+    }
 
     return new Response(JSON.stringify({
       success: false,
-      error: error instanceof Error ? error.message : 'Project generation failed. Please try again.'
+      error: userMessage
     } as APIResponse), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
