@@ -131,10 +131,7 @@ const sortedTemplates = [...QUICK_START_TEMPLATES].sort((a, b) => b.popularity -
 </Card>
 
 <script>
-  // Import template functions
-  import { getTemplateById, templateToProjectConfig } from '../lib/quickStartTemplates';
-
-  // Template selection handling
+  // Template selection handling (no imports needed - template ID is stored in sessionStorage)
   const templateCards = document.querySelectorAll('.template-card');
 
   templateCards.forEach(card => {
