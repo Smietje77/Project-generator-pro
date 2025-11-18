@@ -117,13 +117,18 @@ import Button from './ui/Button.astro';
   // Generate questions on load
   async function generateQuestions() {
     try {
+      console.log('[Discovery] Starting question generation...');
+
       // Show loading state
       loadingState?.classList.remove('hidden');
       errorState?.classList.add('hidden');
       form?.classList.add('hidden');
 
       // Get Step 1 data
-      const step1Data = JSON.parse(sessionStorage.getItem('step1Data') || '{}');
+      const step1DataStr = sessionStorage.getItem('step1Data');
+      console.log('[Discovery] Step1 data:', step1DataStr);
+
+      const step1Data = JSON.parse(step1DataStr || '{}');
 
       if (!step1Data.projectName || !step1Data.description) {
         throw new Error('Missing project information. Please complete Step 1 first.');
@@ -140,18 +145,26 @@ import Button from './ui/Button.astro';
         return;
       }
 
+      console.log('[Discovery] Calling /api/generate-questions...', {
+        projectName: step1Data.projectName,
+        projectType: step1Data.projectType
+      });
+
       // Call API to generate questions
       const response = await fetch('/api/generate-questions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'same-origin', // Include cookies for authentication
         body: JSON.stringify({
           projectName: step1Data.projectName,
           description: step1Data.description,
           projectType: step1Data.projectType
         })
       });
+
+      console.log('[Discovery] Response status:', response.status);
 
       if (!response.ok) {
         throw new Error('Failed to generate questions');
