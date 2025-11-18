@@ -3,6 +3,7 @@ import Card from './ui/Card.astro';
 import Input from './ui/Input.astro';
 import Textarea from './ui/Textarea.astro';
 import Button from './ui/Button.astro';
+import { QUICK_START_TEMPLATES } from '../lib/quickStartTemplates';
 
 const projectTypes = [
   { value: 'saas', label: 'SaaS Application', icon: '🚀' },
@@ -14,9 +15,74 @@ const projectTypes = [
   { value: 'library', label: 'Library/Package', icon: '📦' },
   { value: 'other', label: 'Other', icon: '✨' },
 ];
+
+// Sort templates by popularity for display
+const sortedTemplates = [...QUICK_START_TEMPLATES].sort((a, b) => b.popularity - a.popularity);
 ---
 
-<Card title="Step 1: Project Basics" description="Tell us about your project">
+<!-- Quick Start Templates Section -->
+<div class="mb-8">
+  <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg p-1">
+    <div class="bg-white rounded-lg p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="text-xl font-bold text-gray-900">⚡ Quick Start Templates</h3>
+          <p class="text-sm text-gray-600 mt-1">Get started in 15-30 seconds with pre-configured templates</p>
+        </div>
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          NEW! 60% Faster
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {sortedTemplates.map((template) => (
+          <button
+            type="button"
+            class="template-card group relative bg-white border-2 border-gray-200 rounded-lg p-4 text-left hover:border-indigo-500 hover:shadow-lg transition-all duration-200 cursor-pointer"
+            data-template-id={template.id}
+            data-template-name={template.name}
+            data-template-description={template.description}
+          >
+            <div class="absolute top-2 right-2">
+              <span class="text-xs text-gray-500">{template.estimatedTime}</span>
+            </div>
+            <div class="text-3xl mb-2">{template.icon}</div>
+            <h4 class="font-semibold text-gray-900 mb-1">{template.name}</h4>
+            <p class="text-xs text-gray-600 line-clamp-2">{template.description}</p>
+            <div class="mt-3 flex flex-wrap gap-1">
+              {template.tags.slice(0, 3).map((tag) => (
+                <span class="inline-block px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded">
+                  {tag}
+                </span>
+              ))}
+            </div>
+            {template.popularity >= 4 && (
+              <div class="absolute -top-1 -right-1">
+                <span class="flex h-5 w-5 items-center justify-center rounded-full bg-yellow-400 text-xs">
+                  ⭐
+                </span>
+              </div>
+            )}
+          </button>
+        ))}
+      </div>
+
+      <div class="mt-6 flex items-center justify-center">
+        <div class="relative">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-gray-300"></div>
+          </div>
+          <div class="relative flex justify-center text-sm">
+            <span class="bg-white px-4 text-gray-500">OR</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Custom Project Form -->
+<Card title="Custom Project Configuration" description="Build a project from scratch with full customization">
   <form id="step1-form" class="space-y-6">
     <Input
       name="projectName"
@@ -65,7 +131,121 @@ const projectTypes = [
 </Card>
 
 <script>
-  // Form validation and navigation
+  // Import template functions
+  import { getTemplateById, templateToProjectConfig } from '../lib/quickStartTemplates';
+
+  // Template selection handling
+  const templateCards = document.querySelectorAll('.template-card');
+
+  templateCards.forEach(card => {
+    card.addEventListener('click', async (e) => {
+      e.preventDefault();
+
+      const templateId = (e.currentTarget as HTMLElement).dataset.templateId;
+      const templateName = (e.currentTarget as HTMLElement).dataset.templateName;
+      const templateDescription = (e.currentTarget as HTMLElement).dataset.templateDescription;
+
+      // Create a modal or inline form for quick project name input
+      const quickForm = document.createElement('div');
+      quickForm.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
+      quickForm.innerHTML = `
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <h3 class="text-xl font-bold mb-4">Quick Start: ${templateName}</h3>
+          <form id="quick-start-form" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Project Name <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="projectName"
+                required
+                placeholder="my-awesome-project"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Custom Description (optional)
+              </label>
+              <textarea
+                name="description"
+                rows="3"
+                placeholder="${templateDescription}"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+              ></textarea>
+            </div>
+            <div class="flex gap-3 pt-2">
+              <button
+                type="submit"
+                class="flex-1 bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition"
+              >
+                Generate in ~20 seconds ⚡
+              </button>
+              <button
+                type="button"
+                id="cancel-quick-start"
+                class="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      `;
+
+      document.body.appendChild(quickForm);
+
+      // Focus on project name input
+      const projectNameInput = quickForm.querySelector('input[name="projectName"]') as HTMLInputElement;
+      projectNameInput?.focus();
+
+      // Handle quick start form submission
+      const quickStartForm = quickForm.querySelector('#quick-start-form') as HTMLFormElement;
+      quickStartForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(quickStartForm);
+        const projectName = formData.get('projectName') as string;
+        const description = (formData.get('description') as string) || templateDescription;
+
+        // Store template data for generation
+        sessionStorage.setItem('templateId', templateId!);
+        sessionStorage.setItem('step1Data', JSON.stringify({
+          projectName,
+          description,
+          projectType: 'template',
+          templateId
+        }));
+
+        // Skip directly to step 4 (generation)
+        sessionStorage.setItem('skipToGeneration', 'true');
+
+        // Remove modal
+        quickForm.remove();
+
+        // Dispatch event to jump to generation
+        window.dispatchEvent(new CustomEvent('wizard:jumpToGeneration'));
+      });
+
+      // Handle cancel
+      const cancelBtn = quickForm.querySelector('#cancel-quick-start');
+      cancelBtn?.addEventListener('click', () => {
+        quickForm.remove();
+      });
+
+      // Close on escape key
+      const handleEscape = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          quickForm.remove();
+          document.removeEventListener('keydown', handleEscape);
+        }
+      };
+      document.addEventListener('keydown', handleEscape);
+    });
+  });
+
+  // Form validation and navigation for custom projects
   const form = document.getElementById('step1-form') as HTMLFormElement;
 
   if (form) {
@@ -84,6 +264,10 @@ const projectTypes = [
         description,
         projectType
       }));
+
+      // Clear template flag
+      sessionStorage.removeItem('templateId');
+      sessionStorage.removeItem('skipToGeneration');
 
       // Dispatch event to parent to move to next step
       window.dispatchEvent(new CustomEvent('wizard:next'));

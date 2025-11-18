@@ -377,6 +377,11 @@ import Step4 from '../components/Step4.astro';
         goToStep(currentStep - 1);
       }
     });
+
+    // Jump directly to generation for Quick Start Templates
+    window.addEventListener('wizard:jumpToGeneration', () => {
+      goToStep(4);
+    });
   });
 </script>
 

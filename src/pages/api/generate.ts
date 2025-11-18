@@ -3,6 +3,7 @@ import { ProjectAnalyzer } from '../../lib/analysis';
 import { PromptGenerator } from '../../lib/promptGenerator';
 import type { ProjectConfig, APIResponse, Agent, MCPServer, ProjectFeature } from '../../lib/types';
 import { mapFeaturesToProjectFeatures } from '../../lib/featureMapping';
+import { getTemplateById, templateToProjectConfig } from '../../lib/quickStartTemplates';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -37,28 +38,51 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     // Parse request body
     const body = await request.json();
-    const { config: rawConfig, analysis: requestAnalysis } = body;
+    const { config: rawConfig, analysis: requestAnalysis, templateId } = body;
 
-    // Build proper ProjectConfig from request data using centralized feature mapping
-    const features: ProjectFeature[] = mapFeaturesToProjectFeatures(rawConfig.features || []);
+    let config: ProjectConfig;
 
-    const config: ProjectConfig = {
-      name: rawConfig.projectName || rawConfig.name,
-      description: rawConfig.description,
-      type: rawConfig.projectType || rawConfig.type,
-      features: features,
-      techStack: {
-        frontend: rawConfig.techStack?.frontend ? [rawConfig.techStack.frontend] : [],
-        backend: rawConfig.techStack?.backend ? [rawConfig.techStack.backend] : [],
-        database: rawConfig.techStack?.database ? [rawConfig.techStack.database] : [],
-      },
-      metadata: rawConfig.metadata || {
-        createdAt: new Date(),
-        estimatedComplexity: 'moderate',
-        estimatedDuration: '2-4 weeks',
-        teamSize: 3
+    // Check if using Quick Start Template
+    if (templateId) {
+      const template = getTemplateById(templateId);
+      if (!template) {
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'Invalid template ID'
+        } as APIResponse), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
       }
-    };
+
+      // Use template configuration with user's project name and description
+      config = templateToProjectConfig(
+        template,
+        rawConfig.projectName || rawConfig.name,
+        rawConfig.description
+      );
+    } else {
+      // Build proper ProjectConfig from request data using centralized feature mapping
+      const features: ProjectFeature[] = mapFeaturesToProjectFeatures(rawConfig.features || []);
+
+      config = {
+        name: rawConfig.projectName || rawConfig.name,
+        description: rawConfig.description,
+        type: rawConfig.projectType || rawConfig.type,
+        features: features,
+        techStack: {
+          frontend: rawConfig.techStack?.frontend ? [rawConfig.techStack.frontend] : [],
+          backend: rawConfig.techStack?.backend ? [rawConfig.techStack.backend] : [],
+          database: rawConfig.techStack?.database ? [rawConfig.techStack.database] : [],
+        },
+        metadata: rawConfig.metadata || {
+          createdAt: new Date(),
+          estimatedComplexity: 'moderate',
+          estimatedDuration: '2-4 weeks',
+          teamSize: 3
+        }
+      };
+    }
 
     // Validate config
     if (!config || !config.name) {

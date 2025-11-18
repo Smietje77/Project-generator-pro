@@ -198,30 +198,53 @@ import Alert from './ui/Alert.astro';
     async function generateProject() {
       console.log('[Step4] generateProject() called');
       try {
-        // Get all collected data
+        // Check if using Quick Start Template
+        const templateId = sessionStorage.getItem('templateId');
+        const skipToGeneration = sessionStorage.getItem('skipToGeneration');
         const step1Data = JSON.parse(sessionStorage.getItem('step1Data') || '{}');
-        const step2Data = JSON.parse(sessionStorage.getItem('step2Data') || '{}');
-        const step3Customizations = JSON.parse(sessionStorage.getItem('step3Customizations') || '{}');
-        const analysisData = JSON.parse(sessionStorage.getItem('analysisData') || '{}');
 
-        console.log('[Step4] Loaded data:', { step1Data, step2Data, step3Customizations, analysisData });
+        let requestBody;
 
-        // Simulate progress updates
-        updateProgress(1, 'Creating project structure...');
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        if (templateId && skipToGeneration === 'true') {
+          // Quick Start Template generation - faster path
+          console.log('[Step4] Using Quick Start Template:', templateId);
 
-        updateProgress(2, 'Generating AI agents...');
-        await new Promise(resolve => setTimeout(resolve, 1000));
+          // Faster progress updates for templates
+          updateProgress(1, '⚡ Loading template configuration...');
+          await new Promise(resolve => setTimeout(resolve, 300));
 
-        updateProgress(3, 'Writing configuration files...');
+          updateProgress(2, '⚡ Configuring AI agents...');
+          await new Promise(resolve => setTimeout(resolve, 300));
 
-        // Call generate API
-        const response = await fetch('/api/generate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
+          updateProgress(3, '⚡ Setting up project files...');
+
+          // Use template-based generation
+          requestBody = {
+            templateId: templateId,
+            config: {
+              projectName: step1Data.projectName,
+              description: step1Data.description,
+              projectType: 'template',
+            }
+          };
+        } else {
+          // Regular custom project generation
+          const step2Data = JSON.parse(sessionStorage.getItem('step2Data') || '{}');
+          const step3Customizations = JSON.parse(sessionStorage.getItem('step3Customizations') || '{}');
+          const analysisData = JSON.parse(sessionStorage.getItem('analysisData') || '{}');
+
+          console.log('[Step4] Custom project data:', { step1Data, step2Data, step3Customizations, analysisData });
+
+          // Regular progress updates
+          updateProgress(1, 'Creating project structure...');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+          updateProgress(2, 'Generating AI agents...');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+          updateProgress(3, 'Writing configuration files...');
+
+          requestBody = {
             config: {
               projectName: step1Data.projectName,
               description: step1Data.description,
@@ -232,14 +255,23 @@ import Alert from './ui/Alert.astro';
             },
             customizations: step3Customizations,
             analysis: analysisData,
-          }),
+          };
+        }
+
+        // Call generate API
+        const response = await fetch('/api/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
         });
 
         if (!response.ok) {
           throw new Error('Generation failed');
         }
 
-        updateProgress(4, 'Creating project prompt...');
+        updateProgress(4, templateId ? '⚡ Finalizing quick start project...' : 'Creating project prompt...');
         const result = await response.json();
 
         if (!result.success) {
@@ -248,10 +280,16 @@ import Alert from './ui/Alert.astro';
 
         projectData = result.data;
 
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, templateId ? 200 : 500));
 
         // Show success
         displaySuccess(result.data);
+
+        // Clear template flags after successful generation
+        if (templateId) {
+          sessionStorage.removeItem('templateId');
+          sessionStorage.removeItem('skipToGeneration');
+        }
 
       } catch (err) {
         console.error('Generation error:', err);
