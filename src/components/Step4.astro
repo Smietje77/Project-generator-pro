@@ -151,6 +151,7 @@ import Alert from './ui/Alert.astro';
 
 <script>
   import { showError, showSuccess, showInfo } from '../lib/notifications';
+  import { createButtonState } from '../lib/buttonState';
 
   console.log('[Step4] Script loaded');
 
@@ -324,14 +325,15 @@ import Alert from './ui/Alert.astro';
       }
     }
 
+    // Create button state managers
+    const githubBtnState = createButtonState(githubPushBtn as HTMLButtonElement, 'Push to GitHub');
+
     // GitHub push handler
     githubPushBtn?.addEventListener('click', async () => {
       if (!projectData) return;
 
       try {
-        githubPushBtn.setAttribute('disabled', 'true');
-        githubPushBtn.innerHTML = '<span class="inline-flex items-center gap-2"><svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle></svg>Pushing to GitHub...</span>';
-
+        githubBtnState.setLoading('Pushing to GitHub...');
         showInfo('Pushing project to GitHub...', { duration: 3000 });
 
         // Get project details
@@ -357,7 +359,7 @@ import Alert from './ui/Alert.astro';
         const data = await response.json();
 
         // Show success
-        githubPushBtn.classList.add('hidden');
+        githubBtnState.setSuccess('✓ Pushed!', 0);
         githubSuccess?.classList.remove('hidden');
         if (githubLink && data.githubUrl) {
           githubLink.href = data.githubUrl;
@@ -376,8 +378,7 @@ import Alert from './ui/Alert.astro';
       } catch (err) {
         console.error('GitHub push error:', err);
         githubError?.classList.remove('hidden');
-        githubPushBtn?.removeAttribute('disabled');
-        githubPushBtn!.innerHTML = 'Push to GitHub';
+        githubBtnState.setError('Try Again', 3000);
         showError(`Failed to push to GitHub: ${err instanceof Error ? err.message : 'Unknown error'}`, { duration: 0 });
       }
     });
@@ -399,7 +400,9 @@ import Alert from './ui/Alert.astro';
     });
 
     // Download ZIP handler
-    const downloadZipBtn = document.getElementById('download-zip-btn');
+    const downloadZipBtn = document.getElementById('download-zip-btn') as HTMLButtonElement;
+    const downloadBtnState = createButtonState(downloadZipBtn, 'Download ZIP');
+
     downloadZipBtn?.addEventListener('click', async () => {
       if (!projectData || !projectData.sanitizedName) {
         showError('No project data available. Please generate the project first.');
@@ -407,8 +410,7 @@ import Alert from './ui/Alert.astro';
       }
 
       try {
-        downloadZipBtn.setAttribute('disabled', 'true');
-        downloadZipBtn.innerHTML = '<span class="inline-flex items-center gap-2"><svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle></svg>Creating ZIP...</span>';
+        downloadBtnState.setLoading('Creating ZIP...');
 
         const response = await fetch(`/api/download-zip?project=${encodeURIComponent(projectData.sanitizedName)}`);
 
@@ -427,12 +429,12 @@ import Alert from './ui/Alert.astro';
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
 
-        downloadZipBtn.removeAttribute('disabled');
-        downloadZipBtn.innerHTML = 'Download ZIP';
+        downloadBtnState.setSuccess('✓ Downloaded!', 3000);
         showSuccess(`Project "${projectData.sanitizedName}.zip" downloaded successfully!`, { duration: 5000 });
 
       } catch (err) {
         console.error('Download error:', err);
+        downloadBtnState.setError('Try Again', 3000);
         showError(`Failed to download project. You can manually copy files from: ${projectData.projectPath}`, {
           duration: 0,
           action: {
@@ -443,8 +445,6 @@ import Alert from './ui/Alert.astro';
             }
           }
         });
-        downloadZipBtn?.removeAttribute('disabled');
-        downloadZipBtn!.innerHTML = 'Download ZIP';
       }
     });
 

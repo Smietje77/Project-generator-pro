@@ -187,14 +187,18 @@ const databaseOptions = [
 </Card>
 
 <script>
-  import { showError, showSuccess, showWarning } from '../lib/notifications';
+  import { showError, showSuccess, showWarning, showInfo } from '../lib/notifications';
+  import { createButtonState } from '../lib/buttonState';
 
   // Form validation and navigation
   const form = document.getElementById('step2-form') as HTMLFormElement;
-  const aiBtn = document.getElementById('generate-ai-suggestions-btn');
+  const aiBtn = document.getElementById('generate-ai-suggestions-btn') as HTMLButtonElement;
   const aiLoading = document.getElementById('ai-loading');
   const aiReasoningBox = document.getElementById('ai-reasoning-box');
   const aiReasoningText = document.getElementById('ai-reasoning-text');
+
+  // Create button state manager
+  const aiBtnState = createButtonState(aiBtn, 'Generate Suggestions');
 
   // AI Suggestions Handler
   if (aiBtn) {
@@ -211,10 +215,10 @@ const databaseOptions = [
         console.log('[AI Suggest] Requesting suggestions for:', step1Data);
 
         // Show loading state
-        aiBtn.setAttribute('disabled', 'true');
-        aiBtn.textContent = 'Generating...';
+        aiBtnState.setLoading('Analyzing with AI...');
         aiLoading?.classList.remove('hidden');
         aiReasoningBox?.classList.add('hidden');
+        showInfo('AI is analyzing your project description...', { duration: 3000 });
 
         // Call AI API
         const response = await fetch('/api/suggest', {
@@ -287,17 +291,14 @@ const databaseOptions = [
         }
 
         // Success feedback
-        aiBtn.textContent = '✓ Suggestions Applied';
-        setTimeout(() => {
-          aiBtn.textContent = 'Generate Suggestions';
-        }, 3000);
+        aiBtnState.setSuccess('✓ Suggestions Applied', 3000);
+        showSuccess('AI suggestions applied successfully!', { duration: 4000 });
 
       } catch (error) {
         console.error('[AI Suggest] Error:', error);
         showError('Failed to generate AI suggestions. Please try selecting features and tech stack manually.');
-        aiBtn.textContent = 'Generate Suggestions';
+        aiBtnState.setError('Try Again', 3000);
       } finally {
-        aiBtn.removeAttribute('disabled');
         aiLoading?.classList.add('hidden');
       }
     });
