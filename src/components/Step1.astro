@@ -218,6 +218,9 @@ const sortedTemplates = [...QUICK_START_TEMPLATES].sort((a, b) => b.popularity -
         // Skip directly to step 4 (generation)
         sessionStorage.setItem('skipToGeneration', 'true');
 
+        // Clear any previous generation flags to allow new generation
+        sessionStorage.removeItem('projectGenerated');
+
         // Remove modal
         quickForm.remove();
 
@@ -262,9 +265,10 @@ const sortedTemplates = [...QUICK_START_TEMPLATES].sort((a, b) => b.popularity -
         projectType
       }));
 
-      // Clear template flag
+      // Clear template flags and generation state
       sessionStorage.removeItem('templateId');
       sessionStorage.removeItem('skipToGeneration');
+      sessionStorage.removeItem('projectGenerated');
 
       // Dispatch event to parent to move to next step
       window.dispatchEvent(new CustomEvent('wizard:next'));
