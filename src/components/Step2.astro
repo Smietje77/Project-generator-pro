@@ -212,8 +212,6 @@ const databaseOptions = [
           return;
         }
 
-        console.log('[AI Suggest] Requesting suggestions for:', step1Data);
-
         // Show loading state
         aiBtnState.setLoading('Analyzing with AI...');
         aiLoading?.classList.remove('hidden');
@@ -242,8 +240,6 @@ const databaseOptions = [
         if (!result.success) {
           throw new Error(result.error || 'Failed to generate suggestions');
         }
-
-        console.log('[AI Suggest] Received suggestions:', result.data);
 
         // Apply suggestions to form
         const { features, techStack, reasoning } = result.data;

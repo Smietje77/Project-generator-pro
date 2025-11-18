@@ -154,11 +154,22 @@ import Alert from './ui/Alert.astro';
   import { createButtonState } from '../lib/buttonState';
   import { addToHistory } from '../lib/projectHistory';
 
-  console.log('[Step4] Script loaded');
+  // Types
+  interface ProjectData {
+    projectPath: string;
+    promptPath: string;
+    sanitizedName: string;
+    prompt: string;
+    analysis: {
+      totalAgents: number;
+      totalMCPs: number;
+      totalTasks: number;
+    };
+    generationTime?: number;
+  }
 
   // Generation and deployment logic
   document.addEventListener('DOMContentLoaded', () => {
-    console.log('[Step4] DOMContentLoaded fired');
 
     const progressSection = document.getElementById('generation-progress');
     const successSection = document.getElementById('generation-success');
@@ -174,7 +185,7 @@ import Alert from './ui/Alert.astro';
     const startOverBtn = document.getElementById('start-over-btn');
     const copyPromptBtn = document.getElementById('copy-prompt-btn');
 
-    let projectData: any = null;
+    let projectData: ProjectData | null = null;
 
     // Function to update progress
     function updateProgress(step: number, status: string) {
@@ -198,18 +209,16 @@ import Alert from './ui/Alert.astro';
 
     // Function to generate project
     async function generateProject() {
-      console.log('[Step4] generateProject() called');
       try {
         // Check if using Quick Start Template
         const templateId = sessionStorage.getItem('templateId');
         const skipToGeneration = sessionStorage.getItem('skipToGeneration');
         const step1Data = JSON.parse(sessionStorage.getItem('step1Data') || '{}');
 
-        let requestBody;
+        let requestBody: any;
 
         if (templateId && skipToGeneration === 'true') {
           // Quick Start Template generation - faster path
-          console.log('[Step4] Using Quick Start Template:', templateId);
           showInfo('⚡ Generating project from template...', { duration: 3000 });
 
           // Faster progress updates for templates
@@ -236,7 +245,6 @@ import Alert from './ui/Alert.astro';
           const step3Customizations = JSON.parse(sessionStorage.getItem('step3Customizations') || '{}');
           const analysisData = JSON.parse(sessionStorage.getItem('analysisData') || '{}');
 
-          console.log('[Step4] Custom project data:', { step1Data, step2Data, step3Customizations, analysisData });
           showInfo('🚀 Generating custom project...', { duration: 3000 });
 
           // Regular progress updates
@@ -341,10 +349,11 @@ import Alert from './ui/Alert.astro';
           features: step2Data.features || [],
           techStack: step2Data.techStack || {}
         });
-
-        console.log('[Step4] Added project to history');
       } catch (error) {
-        console.error('[Step4] Error adding to history:', error);
+        // Silent failure for history - not critical
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[Step4] Error adding to history:', error);
+        }
       }
     }
 
@@ -500,27 +509,19 @@ import Alert from './ui/Alert.astro';
     });
 
     // Listen for when this step becomes active
-    console.log('[Step4] Registering step:4:active event listener');
     window.addEventListener('step:4:active', () => {
-      console.log('[Step4] step:4:active event fired!');
       const projectGenerated = sessionStorage.getItem('projectGenerated');
-      console.log('[Step4] projectGenerated flag:', projectGenerated);
 
       // Only generate once
       if (!projectGenerated) {
-        console.log('[Step4] Starting generation...');
         sessionStorage.setItem('projectGenerated', 'true');
         generateProject();
-      } else {
-        console.log('[Step4] Project already generated, skipping');
       }
     });
 
-    console.log('[Step4] Event listener registered, checking if step is already active');
     // If step 4 is already visible (in case event fired before listener was added)
     const step4El = document.getElementById('step-4');
     if (step4El && !step4El.classList.contains('hidden')) {
-      console.log('[Step4] Step 4 is already visible, manually triggering generation');
       if (!sessionStorage.getItem('projectGenerated')) {
         sessionStorage.setItem('projectGenerated', 'true');
         generateProject();
