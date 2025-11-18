@@ -17,8 +17,17 @@ export class ProjectCreator {
   constructor() {
     this.analyzer = new ProjectAnalyzer();
     this.promptGenerator = new PromptGenerator();
-    // Use environment variable, fallback to local Windows path
-    this.baseProjectPath = process.env.CLAUDE_PROJECTS_PATH || 'E:\\root\\apps\\projects';
+    // Use environment variable, or auto-detect based on platform
+    this.baseProjectPath = process.env.CLAUDE_PROJECTS_PATH || this.getDefaultProjectPath();
+  }
+
+  /**
+   * Get default project path based on platform
+   */
+  private getDefaultProjectPath(): string {
+    // Check if running on Windows or Linux
+    const isWindows = process.platform === 'win32';
+    return isWindows ? 'E:\\root\\apps\\projects' : '/root/apps/projects';
   }
 
   /**
