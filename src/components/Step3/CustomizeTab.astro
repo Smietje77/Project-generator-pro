@@ -141,9 +141,33 @@ import Button from '../ui/Button.astro';
       <span class="text-xl">🔧</span>
       MCP Servers
     </h3>
-    <div id="mcp-toggles" class="space-y-3">
-      <!-- Will be populated dynamically -->
+
+    <!-- Recommended MCPs -->
+    <div class="mb-4">
+      <h4 class="text-sm font-semibold text-gray-700 mb-2">Recommended for your project</h4>
+      <div id="mcp-toggles" class="space-y-3">
+        <!-- Will be populated dynamically -->
+      </div>
     </div>
+
+    <!-- Additional MCPs (Collapsible) -->
+    <details class="border-t pt-4">
+      <summary class="cursor-pointer font-medium text-gray-700 hover:text-gray-900 flex items-center gap-2 mb-3">
+        <svg class="h-4 w-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
+        <span>+ Add Additional MCP Servers</span>
+      </summary>
+
+      <div class="bg-gray-50 rounded-lg p-4">
+        <p class="text-sm text-gray-600 mb-3">
+          Select additional MCP servers that weren't automatically recommended but might be useful for your project:
+        </p>
+        <div id="additional-mcp-list" class="space-y-2 max-h-96 overflow-y-auto">
+          <!-- Will be populated dynamically with all available MCPs -->
+        </div>
+      </div>
+    </details>
   </div>
 
   <!-- Re-analyze Section -->
@@ -220,10 +244,20 @@ import Button from '../ui/Button.astro';
   [x-cloak] {
     display: none !important;
   }
+
+  /* Rotate chevron when details is open */
+  details[open] > summary svg {
+    transform: rotate(180deg);
+  }
+
+  details > summary svg {
+    transition: transform 0.2s ease;
+  }
 </style>
 
 <script>
   import { showError, showSuccess, showInfo } from '../../lib/notifications';
+  import { MCP_DATABASE } from '../../lib/mcpDatabase';
 
   // Customize tab functionality
   let originalConfig: any = null;
@@ -505,25 +539,84 @@ import Button from '../ui/Button.astro';
       }).join('');
     }
 
-    // Populate MCP toggles
+    // Populate MCP toggles (recommended MCPs)
     const mcpToggles = document.getElementById('mcp-toggles');
+    const recommendedMcpIds = new Set<string>();
+
     if (mcpToggles && analysis.recommendedMCPs) {
-      mcpToggles.innerHTML = analysis.recommendedMCPs.map((mcp: any) => `
-        <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-          <input
-            type="checkbox"
-            ${mcp.required ? 'checked disabled' : 'checked'}
-            value="${mcp.id}"
-            data-mcp="${mcp.id}"
-            class="h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-          />
-          <div class="flex-1">
-            <div class="font-medium text-gray-900">${mcp.name}</div>
-            <div class="text-sm text-gray-500">${mcp.description || ''}</div>
-          </div>
-          ${mcp.required ? '<span class="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">Required</span>' : ''}
-        </label>
-      `).join('');
+      mcpToggles.innerHTML = analysis.recommendedMCPs.map((mcp: any) => {
+        recommendedMcpIds.add(mcp.id);
+        return `
+          <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+            <input
+              type="checkbox"
+              ${mcp.required ? 'checked disabled' : 'checked'}
+              value="${mcp.id}"
+              data-mcp="${mcp.id}"
+              class="h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+            />
+            <div class="flex-1">
+              <div class="font-medium text-gray-900">${mcp.name}</div>
+              <div class="text-sm text-gray-500">${mcp.description || ''}</div>
+            </div>
+            ${mcp.required ? '<span class="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">Required</span>' : ''}
+          </label>
+        `;
+      }).join('');
+    }
+
+    // Populate additional MCPs list (all MCPs not recommended)
+    const additionalMcpList = document.getElementById('additional-mcp-list');
+    if (additionalMcpList) {
+      const additionalMcps = MCP_DATABASE.filter(mcp => !recommendedMcpIds.has(mcp.id));
+
+      if (additionalMcps.length === 0) {
+        additionalMcpList.innerHTML = '<p class="text-sm text-gray-500 italic">All available MCPs are already recommended for your project.</p>';
+      } else {
+        additionalMcpList.innerHTML = additionalMcps.map((mcp: any) => {
+          const categoryBadges = mcp.categories.slice(0, 2).map((cat: string) =>
+            `<span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded">${cat}</span>`
+          ).join(' ');
+
+          return `
+            <label class="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-indigo-300 cursor-pointer transition-colors">
+              <input
+                type="checkbox"
+                value="${mcp.id}"
+                data-mcp="${mcp.id}"
+                name="additional-mcp"
+                class="mt-1 h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+              />
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="font-medium text-gray-900">${mcp.name}</div>
+                  ${categoryBadges}
+                </div>
+                <div class="text-sm text-gray-600 mb-2">${mcp.description || ''}</div>
+                <details class="text-xs">
+                  <summary class="cursor-pointer text-indigo-600 hover:text-indigo-700">View capabilities & use cases</summary>
+                  <div class="mt-2 space-y-1 pl-2 border-l-2 border-gray-200">
+                    <div>
+                      <strong class="text-gray-700">Capabilities:</strong>
+                      <ul class="list-disc list-inside text-gray-600 ml-2">
+                        ${mcp.capabilities.slice(0, 3).map((cap: string) => `<li>${cap}</li>`).join('')}
+                        ${mcp.capabilities.length > 3 ? `<li class="text-gray-400">+${mcp.capabilities.length - 3} more...</li>` : ''}
+                      </ul>
+                    </div>
+                    <div>
+                      <strong class="text-gray-700">Use Cases:</strong>
+                      <ul class="list-disc list-inside text-gray-600 ml-2">
+                        ${mcp.useCases.slice(0, 3).map((use: string) => `<li>${use}</li>`).join('')}
+                        ${mcp.useCases.length > 3 ? `<li class="text-gray-400">+${mcp.useCases.length - 3} more...</li>` : ''}
+                      </ul>
+                    </div>
+                  </div>
+                </details>
+              </div>
+            </label>
+          `;
+        }).join('');
+      }
     }
 
     // Populate advanced options
