@@ -93,7 +93,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     } else {
       // Build proper ProjectConfig from request data using centralized feature mapping
+      console.log('[API:Generate] Raw features from request:', rawConfig.features);
       const features: ProjectFeature[] = mapFeaturesToProjectFeatures(rawConfig.features || []);
+      console.log('[API:Generate] Mapped features:', JSON.stringify(features, null, 2));
 
       config = {
         name: rawConfig.projectName || rawConfig.name,

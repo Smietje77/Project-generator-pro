@@ -78,11 +78,33 @@ export const FEATURE_DEFINITIONS: Record<string, FeatureDefinition> = {
  * @param featureIds Array of feature ID strings
  * @returns Array of ProjectFeature objects
  */
-export function mapFeaturesToProjectFeatures(featureIds: string[]): ProjectFeature[] {
-  return featureIds
-    .filter(id => id && FEATURE_DEFINITIONS[id]) // Filter out invalid IDs
+export function mapFeaturesToProjectFeatures(featureIds: string[] | any[]): ProjectFeature[] {
+  console.log('[featureMapping] Input featureIds:', featureIds);
+  console.log('[featureMapping] Input type:', typeof featureIds, 'isArray:', Array.isArray(featureIds));
+
+  // Normalize input - handle both strings and objects
+  const normalizedIds = featureIds.map((item: any) => {
+    if (typeof item === 'string') {
+      return item;
+    } else if (item && typeof item === 'object' && item.id) {
+      return item.id;
+    }
+    return null;
+  }).filter(Boolean) as string[];
+
+  console.log('[featureMapping] Normalized IDs:', normalizedIds);
+
+  const result = normalizedIds
+    .filter(id => {
+      const exists = id && FEATURE_DEFINITIONS[id];
+      if (!exists) {
+        console.warn(`[featureMapping] Feature ID "${id}" not found in FEATURE_DEFINITIONS`);
+      }
+      return exists;
+    })
     .map(id => {
       const definition = FEATURE_DEFINITIONS[id];
+      console.log(`[featureMapping] Mapping "${id}" to:`, { name: definition.name, category: definition.category });
       return {
         id: definition.id,
         name: definition.name,
@@ -91,6 +113,9 @@ export function mapFeaturesToProjectFeatures(featureIds: string[]): ProjectFeatu
         description: definition.description
       };
     });
+
+  console.log('[featureMapping] Final mapped features:', result);
+  return result;
 }
 
 /**
