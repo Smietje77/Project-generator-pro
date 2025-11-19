@@ -7,9 +7,11 @@ export class PromptGenerator {
   
   generate(analysis: AnalysisResult, discoveryData?: any): GeneratedPrompt {
     const markdown = this.buildMarkdown(analysis, discoveryData);
+    const starterPrompt = this.buildStarterPrompt(analysis);
 
     return {
       markdown,
+      starterPrompt,
       metadata: {
         projectName: analysis.project.name,
         totalAgents: analysis.requiredAgents.length,
@@ -281,5 +283,30 @@ Begin execution now!
 ---
 
 **⚡ PROJECT GENERATION COMPLETE - START BUILDING! ⚡**`;
+  }
+
+  /**
+   * Build a concise starter prompt for Claude Code
+   */
+  private buildStarterPrompt(analysis: AnalysisResult): string {
+    const { project } = analysis;
+    const managingAgent = analysis.requiredAgents.find(a => a.role.toLowerCase().includes('managing'));
+
+    return `I have a project specification in PROJECT_PROMPT.md. Please act as the ${managingAgent?.name || 'Managing Agent'} and:
+
+1. Read the PROJECT_PROMPT.md file completely
+2. Understand the project: ${project.name} - ${project.description}
+3. Review the ${analysis.requiredAgents.length} AI agents, their responsibilities, and the ${analysis.taskBreakdown.length} tasks
+4. Initialize the project structure in the current directory
+5. Set up Git repository and make the initial commit
+6. Begin executing the tasks in the order specified in the Task Breakdown
+
+Key tech stack: ${[
+  ...(project.techStack.frontend || []),
+  ...(project.techStack.backend || []),
+  ...(project.techStack.database || [])
+].filter(Boolean).join(', ')}
+
+Start by reading PROJECT_PROMPT.md and then begin the implementation. Work systematically through the task list, coordinating with other agents as needed.`;
   }
 }

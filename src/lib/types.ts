@@ -142,6 +142,7 @@ export interface CollaborationProtocol {
 
 export interface GeneratedPrompt {
   markdown: string;
+  starterPrompt: string;
   metadata: PromptMetadata;
 }
 

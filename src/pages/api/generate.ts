@@ -344,6 +344,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         promptPath: path.join(projectPath, '.claude', 'PROJECT_PROMPT.md'),
         sanitizedName: finalName, // Use finalName which includes timestamp if directory existed
         prompt: generatedPrompt.markdown, // The generated prompt for display
+        starterPrompt: generatedPrompt.starterPrompt, // Quick start prompt for Claude Code
         analysis: {
           totalAgents: analysisResult.requiredAgents.length,
           totalMCPs: analysisResult.recommendedMCPs.length,

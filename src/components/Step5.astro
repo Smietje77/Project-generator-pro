@@ -58,10 +58,35 @@ import Alert from './ui/Alert.astro';
     <div id="generation-success" class="hidden space-y-6">
       <Alert type="success" message="Project generated successfully!" />
 
+      <!-- Claude Code Starter Prompt -->
+      <div class="space-y-3">
+        <div class="bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-lg p-5">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <span class="text-2xl">🚀</span>
+              <div>
+                <h3 class="text-lg font-semibold text-indigo-900">Claude Code Starter Prompt</h3>
+                <p class="text-sm text-indigo-700 mt-0.5">Copy this and paste it into Claude Code to get started immediately</p>
+              </div>
+            </div>
+            <button
+              id="copy-starter-btn"
+              class="px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors shadow-sm"
+            >
+              Copy Starter Prompt
+            </button>
+          </div>
+
+          <div class="bg-white rounded-lg p-4 border border-indigo-200">
+            <pre id="starter-prompt" class="text-sm whitespace-pre-wrap font-mono text-gray-800 leading-relaxed">Loading...</pre>
+          </div>
+        </div>
+      </div>
+
       <!-- Generated Prompt Display -->
       <div class="space-y-3">
         <div class="flex items-center justify-between">
-          <h3 class="text-lg font-semibold text-gray-900">Generated Project Prompt</h3>
+          <h3 class="text-lg font-semibold text-gray-900">Full Project Prompt (PROJECT_PROMPT.md)</h3>
           <button
             id="copy-prompt-btn"
             class="px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
@@ -160,6 +185,7 @@ import Alert from './ui/Alert.astro';
     promptPath: string;
     sanitizedName: string;
     prompt: string;
+    starterPrompt?: string;
     analysis: {
       totalAgents: number;
       totalMCPs: number;
@@ -177,6 +203,7 @@ import Alert from './ui/Alert.astro';
     const progressBar = document.getElementById('progress-bar') as HTMLElement;
     const progressStatus = document.getElementById('progress-status') as HTMLElement;
     const generatedPromptEl = document.getElementById('generated-prompt') as HTMLElement;
+    const starterPromptEl = document.getElementById('starter-prompt') as HTMLElement;
     const projectPathEl = document.getElementById('project-path') as HTMLElement;
     const githubPushBtn = document.getElementById('github-push-btn');
     const githubSuccess = document.getElementById('github-success');
@@ -334,6 +361,10 @@ import Alert from './ui/Alert.astro';
         generatedPromptEl.textContent = data.prompt;
       }
 
+      if (data.starterPrompt && starterPromptEl) {
+        starterPromptEl.textContent = data.starterPrompt;
+      }
+
       if (data.projectPath && projectPathEl) {
         projectPathEl.textContent = data.projectPath;
       }
@@ -421,12 +452,30 @@ import Alert from './ui/Alert.astro';
     });
 
     // Copy prompt to clipboard
+    // Copy starter prompt to clipboard
+    const copyStarterBtn = document.getElementById('copy-starter-btn');
+    copyStarterBtn?.addEventListener('click', async () => {
+      const starterText = starterPromptEl?.textContent || '';
+      try {
+        await navigator.clipboard.writeText(starterText);
+        copyStarterBtn.textContent = 'Copied!';
+        showSuccess('Starter prompt copied! Paste it into Claude Code to begin.', { duration: 4000 });
+        setTimeout(() => {
+          copyStarterBtn.textContent = 'Copy Starter Prompt';
+        }, 2000);
+      } catch (err) {
+        console.error('Copy failed:', err);
+        showError('Failed to copy to clipboard. Please copy manually.', { duration: 5000 });
+      }
+    });
+
+    // Copy full prompt to clipboard
     copyPromptBtn?.addEventListener('click', async () => {
       const promptText = generatedPromptEl?.textContent || '';
       try {
         await navigator.clipboard.writeText(promptText);
         copyPromptBtn.textContent = 'Copied!';
-        showSuccess('Prompt copied to clipboard!', { duration: 3000 });
+        showSuccess('Full prompt copied to clipboard!', { duration: 3000 });
         setTimeout(() => {
           copyPromptBtn.textContent = 'Copy to Clipboard';
         }, 2000);
