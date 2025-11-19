@@ -352,38 +352,55 @@ const databaseOptions = [
     }
 
     // Load saved data if exists
-    const savedData = sessionStorage.getItem('step2Data');
-    if (savedData) {
-      try {
-        const data = JSON.parse(savedData);
+    function loadSavedData() {
+      const savedData = sessionStorage.getItem('step2Data');
+      if (savedData) {
+        try {
+          const data = JSON.parse(savedData);
 
-        // Restore features checkboxes
-        if (data.features) {
-          data.features.forEach((featureId: string) => {
-            const checkbox = form.querySelector(`input[value="${featureId}"]`) as HTMLInputElement;
-            if (checkbox) checkbox.checked = true;
-          });
-        }
+          // Clear all checkboxes first
+          const allCheckboxes = form.querySelectorAll('input[name="features"]') as NodeListOf<HTMLInputElement>;
+          allCheckboxes.forEach(cb => cb.checked = false);
 
-        // Restore selects
-        if (data.techStack) {
-          (form.querySelector('select[name="frontend"]') as HTMLSelectElement).value = data.techStack.frontend || '';
-          (form.querySelector('select[name="backend"]') as HTMLSelectElement).value = data.techStack.backend || '';
-          (form.querySelector('select[name="database"]') as HTMLSelectElement).value = data.techStack.database || '';
-        }
+          // Restore features checkboxes
+          if (data.features) {
+            data.features.forEach((featureId: string) => {
+              const checkbox = form.querySelector(`input[value="${featureId}"]`) as HTMLInputElement;
+              if (checkbox) checkbox.checked = true;
+            });
+          }
 
-        // Restore textarea
-        if (data.additionalRequirements) {
-          (form.querySelector('textarea[name="additionalRequirements"]') as HTMLTextAreaElement).value = data.additionalRequirements;
-        }
+          // Restore selects
+          if (data.techStack) {
+            (form.querySelector('select[name="frontend"]') as HTMLSelectElement).value = data.techStack.frontend || '';
+            (form.querySelector('select[name="backend"]') as HTMLSelectElement).value = data.techStack.backend || '';
+            (form.querySelector('select[name="database"]') as HTMLSelectElement).value = data.techStack.database || '';
+          }
 
-        // Restore complexity
-        if (data.estimatedComplexity) {
-          (form.querySelector('select[name="estimatedComplexity"]') as HTMLSelectElement).value = data.estimatedComplexity;
+          // Restore textarea
+          if (data.additionalRequirements) {
+            (form.querySelector('textarea[name="additionalRequirements"]') as HTMLTextAreaElement).value = data.additionalRequirements;
+          }
+
+          // Restore complexity
+          if (data.estimatedComplexity) {
+            (form.querySelector('select[name="estimatedComplexity"]') as HTMLSelectElement).value = data.estimatedComplexity;
+          }
+        } catch (error) {
+          console.error('Error loading saved data:', error);
         }
-      } catch (error) {
-        console.error('Error loading saved data:', error);
       }
     }
+
+    // Load on initial render
+    loadSavedData();
+
+    // Listen for project loaded from history
+    window.addEventListener('project:loaded', () => {
+      console.log('[Step3] Project loaded event received');
+      setTimeout(() => {
+        loadSavedData();
+      }, 100);
+    });
   }
 </script>

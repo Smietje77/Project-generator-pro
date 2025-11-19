@@ -335,25 +335,40 @@ const sortedTemplates = [...QUICK_START_TEMPLATES].sort((a, b) => b.popularity -
     });
 
     // Load saved data if exists
-    const savedData = sessionStorage.getItem('step1Data');
-    if (savedData) {
-      try {
-        const data = JSON.parse(savedData);
+    function loadSavedData() {
+      const savedData = sessionStorage.getItem('step1Data');
+      if (savedData) {
+        try {
+          const data = JSON.parse(savedData);
 
-        // Restore input fields
-        if (data.projectName) {
-          (form.querySelector('input[name="projectName"]') as HTMLInputElement).value = data.projectName;
+          // Restore input fields
+          if (data.projectName) {
+            (form.querySelector('input[name="projectName"]') as HTMLInputElement).value = data.projectName;
+          }
+          if (data.description) {
+            (form.querySelector('textarea[name="description"]') as HTMLTextAreaElement).value = data.description;
+          }
+          if (data.projectType) {
+            const radio = form.querySelector(`input[name="projectType"][value="${data.projectType}"]`) as HTMLInputElement;
+            if (radio) radio.checked = true;
+          }
+        } catch (error) {
+          console.error('Error loading saved data:', error);
         }
-        if (data.description) {
-          (form.querySelector('textarea[name="description"]') as HTMLTextAreaElement).value = data.description;
-        }
-        if (data.projectType) {
-          const radio = form.querySelector(`input[name="projectType"][value="${data.projectType}"]`) as HTMLInputElement;
-          if (radio) radio.checked = true;
-        }
-      } catch (error) {
-        console.error('Error loading saved data:', error);
       }
     }
+
+    // Load on initial render
+    loadSavedData();
+
+    // Listen for project loaded from history
+    window.addEventListener('project:loaded', (e) => {
+      console.log('[Step1] Project loaded event received:', e);
+      // Wait a bit for sessionStorage to be updated
+      setTimeout(() => {
+        loadSavedData();
+        showInfo('Project loaded! Review the details and click "Next" to continue.', { duration: 4000 });
+      }, 100);
+    });
   }
 </script>

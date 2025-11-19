@@ -6,51 +6,72 @@
 ---
 
 <div id="project-history-section" class="mb-8">
-  <div class="bg-white border-2 border-gray-200 rounded-lg p-6">
-    <div class="flex items-center justify-between mb-4">
-      <div>
-        <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-          <span>📚</span>
-          Recent Projects
-        </h3>
-        <p class="text-sm text-gray-600 mt-1">Continue where you left off or start a similar project</p>
+  <div class="bg-white border-2 border-gray-200 rounded-lg overflow-hidden">
+    <!-- Collapsible Header -->
+    <button
+      id="history-toggle-btn"
+      class="w-full flex items-center justify-between p-6 hover:bg-gray-50 transition text-left"
+    >
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">📚</span>
+        <div>
+          <h3 class="text-lg font-bold text-gray-900">Recent Projects</h3>
+          <p class="text-sm text-gray-600 mt-0.5">Continue where you left off or start a similar project</p>
+        </div>
       </div>
-      <button
-        id="clear-history-btn"
-        class="text-sm text-gray-500 hover:text-red-600 transition"
-      >
-        Clear All
-      </button>
-    </div>
+      <div class="flex items-center gap-4">
+        <span id="history-count-badge" class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-1 rounded-full">0</span>
+        <svg id="history-chevron" class="h-5 w-5 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
+      </div>
+    </button>
 
-    <!-- History Stats -->
-    <div id="history-stats" class="grid grid-cols-3 gap-4 mb-6">
-      <div class="bg-blue-50 rounded-lg p-3 text-center">
-        <div class="text-2xl font-bold text-blue-900" id="stat-total">0</div>
-        <div class="text-xs text-blue-700">Total Projects</div>
-      </div>
-      <div class="bg-green-50 rounded-lg p-3 text-center">
-        <div class="text-2xl font-bold text-green-900" id="stat-templates">0</div>
-        <div class="text-xs text-green-700">From Templates</div>
-      </div>
-      <div class="bg-purple-50 rounded-lg p-3 text-center">
-        <div class="text-2xl font-bold text-purple-900" id="stat-week">0</div>
-        <div class="text-xs text-purple-700">This Week</div>
-      </div>
-    </div>
+    <!-- Collapsible Content -->
+    <div id="history-content" class="hidden border-t-2 border-gray-200">
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div class="text-sm text-gray-600">
+            Click on a project to load it into the wizard
+          </div>
+          <button
+            id="clear-history-btn"
+            class="text-sm text-gray-500 hover:text-red-600 transition"
+          >
+            Clear All
+          </button>
+        </div>
 
-    <!-- Empty State -->
-    <div id="history-empty" class="text-center py-8 text-gray-500">
-      <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-      </svg>
-      <p class="text-sm font-medium">No projects yet</p>
-      <p class="text-xs mt-1">Your generated projects will appear here</p>
-    </div>
+        <!-- History Stats -->
+        <div id="history-stats" class="grid grid-cols-3 gap-4 mb-6">
+          <div class="bg-blue-50 rounded-lg p-3 text-center">
+            <div class="text-2xl font-bold text-blue-900" id="stat-total">0</div>
+            <div class="text-xs text-blue-700">Total Projects</div>
+          </div>
+          <div class="bg-green-50 rounded-lg p-3 text-center">
+            <div class="text-2xl font-bold text-green-900" id="stat-templates">0</div>
+            <div class="text-xs text-green-700">From Templates</div>
+          </div>
+          <div class="bg-purple-50 rounded-lg p-3 text-center">
+            <div class="text-2xl font-bold text-purple-900" id="stat-week">0</div>
+            <div class="text-xs text-purple-700">This Week</div>
+          </div>
+        </div>
 
-    <!-- History List -->
-    <div id="history-list" class="space-y-3 hidden">
-      <!-- Will be populated by JavaScript -->
+        <!-- Empty State -->
+        <div id="history-empty" class="text-center py-8 text-gray-500">
+          <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+          </svg>
+          <p class="text-sm font-medium">No projects yet</p>
+          <p class="text-xs mt-1">Your generated projects will appear here</p>
+        </div>
+
+        <!-- History List -->
+        <div id="history-list" class="space-y-3 hidden max-h-96 overflow-y-auto">
+          <!-- Will be populated by JavaScript -->
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -143,10 +164,12 @@
     const totalEl = document.getElementById('stat-total');
     const templatesEl = document.getElementById('stat-templates');
     const weekEl = document.getElementById('stat-week');
+    const countBadge = document.getElementById('history-count-badge');
 
     if (totalEl) totalEl.textContent = stats.total.toString();
     if (templatesEl) templatesEl.textContent = stats.templates.toString();
     if (weekEl) weekEl.textContent = stats.lastWeek.toString();
+    if (countBadge) countBadge.textContent = stats.total.toString();
   }
 
   function handleLoadProject(projectId: string) {
@@ -158,10 +181,22 @@
       return;
     }
 
+    console.log('[ProjectHistory] Loading project:', project);
+
     loadProjectIntoWizard(project);
+
+    // Dispatch event to trigger wizard reload
+    window.dispatchEvent(new CustomEvent('project:loaded', { detail: project }));
+
     showSuccess(`Loaded "${project.projectName}" into wizard`, { duration: 3000 });
 
-    // Scroll to top
+    // Scroll to top and close history
+    const historyContent = document.getElementById('history-content');
+    const chevron = document.getElementById('history-chevron');
+
+    historyContent?.classList.add('hidden');
+    chevron?.classList.remove('rotate-180');
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -226,6 +261,23 @@
 
   // Clear all button
   document.getElementById('clear-history-btn')?.addEventListener('click', handleClearAll);
+
+  // Toggle collapse
+  const toggleBtn = document.getElementById('history-toggle-btn');
+  const historyContent = document.getElementById('history-content');
+  const chevron = document.getElementById('history-chevron');
+
+  toggleBtn?.addEventListener('click', () => {
+    const isHidden = historyContent?.classList.contains('hidden');
+
+    if (isHidden) {
+      historyContent?.classList.remove('hidden');
+      chevron?.classList.add('rotate-180');
+    } else {
+      historyContent?.classList.add('hidden');
+      chevron?.classList.remove('rotate-180');
+    }
+  });
 </script>
 
 <style>

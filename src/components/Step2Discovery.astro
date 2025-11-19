@@ -329,23 +329,46 @@ import Button from './ui/Button.astro';
     const totalQuestions = questionsData.length;
     answeredCount = 0;
 
-    questionsData.forEach(q => {
+    console.log('[Progress] Updating progress, total questions:', totalQuestions);
+
+    questionsData.forEach((q, index) => {
       const inputs = form?.querySelectorAll(`[data-question-id="${q.id}"]`) as NodeListOf<HTMLInputElement | HTMLTextAreaElement>;
+
+      console.log(`[Progress] Question ${index + 1} (${q.id}, type: ${q.type}):`, inputs.length, 'inputs found');
+
+      let isAnswered = false;
 
       if (q.type === 'checkboxes') {
         // For checkboxes, check if at least one is selected
         const checked = Array.from(inputs).some(input => (input as HTMLInputElement).checked);
-        if (checked) answeredCount++;
+        isAnswered = checked;
+        console.log(`[Progress]   Checkboxes - Checked:`, checked);
       } else if (q.type === 'multiple-choice') {
         // For radio buttons, check if one is selected
         const selected = Array.from(inputs).some(input => (input as HTMLInputElement).checked);
-        if (selected) answeredCount++;
+        isAnswered = selected;
+        console.log(`[Progress]   Radio - Selected:`, selected);
       } else {
         // For text/textarea, check if value is not empty
-        const value = inputs[0]?.value?.trim();
-        if (value) answeredCount++;
+        // Check all inputs in case there are multiple
+        const hasValue = Array.from(inputs).some(input => {
+          const val = input.value?.trim();
+          console.log(`[Progress]   Checking input value:`, val);
+          return val && val.length > 0;
+        });
+        isAnswered = hasValue;
+        console.log(`[Progress]   Text/Textarea - Has value:`, hasValue);
+      }
+
+      if (isAnswered) {
+        answeredCount++;
+        console.log(`[Progress]   ✓ Question ${index + 1} counted as answered`);
+      } else {
+        console.log(`[Progress]   ✗ Question ${index + 1} NOT counted`);
       }
     });
+
+    console.log('[Progress] Final count:', answeredCount, '/', totalQuestions);
 
     // Update UI
     if (progressText) {
