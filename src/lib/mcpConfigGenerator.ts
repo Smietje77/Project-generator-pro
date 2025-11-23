@@ -1,4 +1,5 @@
 import type { MCPServer } from './types';
+import path from 'path';
 
 /**
  * MCP Server configuration interfaces
@@ -92,10 +93,15 @@ export function generateMCPConfig(
     };
   }
 
-  // Agents MCP (if custom agent server is available)
+  // Agents MCP - altijd toevoegen met correcte node command
+  const agentsDir = path.join(projectPath, '.claude', 'agents').replace(/\\/g, '\\\\');
+
   config.mcpServers['agents'] = {
-    command: 'cmd',
-    args: ['/c', 'npx', '-y', 'agents-mcp-server']
+    command: 'node',
+    args: ['C:\\Users\\bjorn\\agents-mcp-server\\index.js'],
+    env: {
+      AGENTS_DIR: agentsDir
+    }
   };
 
   // Chrome DevTools MCP (for browser automation)
