@@ -32,6 +32,17 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
+    // Check if AI features are available
+    if (!claudeClient.isAvailable()) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'AI features are not available. Please configure ANTHROPIC_API_KEY to enable AI-powered suggestions.'
+      } as APIResponse), {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     // Parse request body
     const body = await request.json();
     const { projectName, description, projectType, discoveryData } = body;

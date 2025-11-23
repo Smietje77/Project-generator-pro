@@ -387,9 +387,7 @@ import Alert from './ui/Alert.astro';
         });
       } catch (error) {
         // Silent failure for history - not critical
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('[Step4] Error adding to history:', error);
-        }
+        console.warn('[Step4] Error adding to history:', error);
       }
     }
 
@@ -563,7 +561,7 @@ import Alert from './ui/Alert.astro';
     });
 
     // Listen for when this step becomes active
-    window.addEventListener('step:4:active', () => {
+    window.addEventListener('step:5:active', () => {
       const projectGenerated = sessionStorage.getItem('projectGenerated');
 
       // Only generate once
@@ -573,9 +571,9 @@ import Alert from './ui/Alert.astro';
       }
     });
 
-    // If step 4 is already visible (in case event fired before listener was added)
-    const step4El = document.getElementById('step-4');
-    if (step4El && !step4El.classList.contains('hidden')) {
+    // If step 5 is already visible (in case event fired before listener was added)
+    const step5El = document.getElementById('step-5');
+    if (step5El && !step5El.classList.contains('hidden')) {
       if (!sessionStorage.getItem('projectGenerated')) {
         sessionStorage.setItem('projectGenerated', 'true');
         generateProject();

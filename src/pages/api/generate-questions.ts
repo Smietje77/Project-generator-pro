@@ -21,9 +21,11 @@ interface APIResponse {
   error?: string;
 }
 
-const anthropic = new Anthropic({
+// Check if API key is available
+const hasApiKey = !!import.meta.env.ANTHROPIC_API_KEY;
+const anthropic = hasApiKey ? new Anthropic({
   apiKey: import.meta.env.ANTHROPIC_API_KEY,
-});
+}) : null;
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
@@ -36,6 +38,18 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         error: 'Unauthorized. Please refresh the page and try again.'
       } as APIResponse), {
         status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Check if AI features are available
+    if (!anthropic) {
+      console.warn('[API:GenerateQuestions] API key not configured');
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'AI features are not available. Please configure ANTHROPIC_API_KEY to enable AI-powered discovery questions.'
+      } as APIResponse), {
+        status: 503,
         headers: { 'Content-Type': 'application/json' }
       });
     }

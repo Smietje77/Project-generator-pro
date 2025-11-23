@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { ProjectAnalyzer } from '../../lib/analysis';
 import { PromptGenerator } from '../../lib/promptGenerator';
+import { generateMCPConfig } from '../../lib/mcpConfigGenerator';
 import type { ProjectConfig, APIResponse, Agent, MCPServer, ProjectFeature } from '../../lib/types';
 import { mapFeaturesToProjectFeatures } from '../../lib/featureMapping';
 import { getTemplateById, templateToProjectConfig } from '../../lib/quickStartTemplates';
@@ -281,18 +282,19 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         fs.writeFileSync(agentPath, agentContent, 'utf-8');
       });
 
-      // Write MCP configuration
-      const mcpConfig = {
-        mcpServers: analysisResult.recommendedMCPs.map((mcp: MCPServer) => ({
-          id: mcp.id,
-          name: mcp.name,
-          required: mcp.required || mcp.id === 'desktop-commander' || mcp.id === 'github',
-          enabled: true,
-          description: mcp.description,
-          capabilities: mcp.capabilities
-        }))
-      };
-      const mcpConfigPath = path.join(projectPath, '.claude', 'mcp-config.json');
+      // Write MCP configuration using the generator (includes agents MCP automatically)
+      const mcpConfig = generateMCPConfig(
+        analysisResult.recommendedMCPs,
+        projectPath,
+        {
+          githubToken: process.env.GITHUB_TOKEN,
+          supabaseProjectRef: process.env.SUPABASE_PROJECT_REF,
+          supabaseAccessToken: process.env.SUPABASE_ACCESS_TOKEN
+        }
+      );
+
+      // Write to root as .mcp.json (Claude Code looks for it there)
+      const mcpConfigPath = path.join(projectPath, '.mcp.json');
       fs.writeFileSync(mcpConfigPath, JSON.stringify(mcpConfig, null, 2), 'utf-8');
 
       // Write README.md

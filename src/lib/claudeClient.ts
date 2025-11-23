@@ -7,17 +7,24 @@ export class ClaudeClient {
   private client: Anthropic | null = null;
 
   /**
+   * Check if API key is available
+   */
+  isAvailable(): boolean {
+    return !!process.env.ANTHROPIC_API_KEY;
+  }
+
+  /**
    * Get or create Anthropic client instance
    * This is lazy-initialized to ensure we read process.env at runtime, not build time
    */
   private getClient(): Anthropic {
     if (!this.client) {
       const apiKey = process.env.ANTHROPIC_API_KEY;
-      
+
       if (!apiKey) {
         console.error('[ClaudeClient] CRITICAL: ANTHROPIC_API_KEY not found in process.env');
         console.error('[ClaudeClient] Available env keys:', Object.keys(process.env).join(', '));
-        throw new Error('ANTHROPIC_API_KEY is not configured');
+        throw new Error('AI features are not available. ANTHROPIC_API_KEY is not configured.');
       }
 
       console.log('[ClaudeClient] Initializing with API key:', apiKey.substring(0, 15) + '...');
