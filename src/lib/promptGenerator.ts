@@ -35,6 +35,7 @@ export class PromptGenerator {
 
     sections.push(
       this.buildMCPSection(analysis),
+      this.buildSkillsSection(analysis),
       this.buildAgentsSection(analysis),
       this.buildTaskBreakdown(analysis),
       this.buildCollaborationProtocol(analysis),
@@ -165,6 +166,114 @@ ${mcp.useCases.map(u => `- ${u}`).join('\n')}
     return section;
   }
 
+  private buildSkillsSection(analysis: AnalysisResult): string {
+    const skills = this.determineRelevantSkills(analysis);
+
+    if (skills.length === 0) {
+      return '';
+    }
+
+    let section = `## ✨ Required Skills
+
+**IMPORTANT:** The following Claude Code skills MUST be used for this project:
+
+`;
+
+    skills.forEach(skill => {
+      section += `### ${skill.name}
+
+**When to use:** ${skill.whenToUse}
+
+**Activation command:**
+\`\`\`
+Use the ${skill.name} skill for ${skill.context}
+\`\`\`
+
+${skill.instructions}
+
+`;
+    });
+
+    section += `**Integration Instructions:**
+- Frontend/UI agents MUST explicitly activate these skills when working on interface components
+- All visual design decisions should be made through the ${skills[0]?.name || 'appropriate'} skill
+- Ensure consistency by using skills for all frontend work, not just initial setup
+
+`;
+
+    return section;
+  }
+
+  private determineRelevantSkills(analysis: AnalysisResult): Array<{
+    name: string;
+    whenToUse: string;
+    context: string;
+    instructions: string;
+  }> {
+    const skills: Array<{
+      name: string;
+      whenToUse: string;
+      context: string;
+      instructions: string;
+    }> = [];
+
+    const { project } = analysis;
+    const hasFrontend = project.techStack.frontend && project.techStack.frontend.length > 0;
+    const hasReact = project.techStack.frontend?.some(tech => 
+      tech.toLowerCase().includes('react') || 
+      tech.toLowerCase().includes('next') ||
+      tech.toLowerCase().includes('vite')
+    );
+
+    // Determine if frontend-design skill is needed
+    if (hasFrontend) {
+      skills.push({
+        name: 'frontend-design',
+        whenToUse: 'Creating any user interface, landing page, dashboard, or visual component',
+        context: 'all design decisions (typography, colors, animations, layouts)',
+        instructions: `**Key Principles to Follow:**
+- Avoid generic AI aesthetics (no Inter font, no purple gradients on white)
+- Use distinctive typography from the skill's recommended fonts
+- Create cohesive color themes (consider dark mode, IDE themes, cultural aesthetics)
+- Add purposeful animations and motion
+- Create depth with backgrounds and atmospheric effects
+
+**Example Usage:**
+When the Frontend Agent or UI/UX Agent begins work, they should explicitly state:
+"Activating frontend-design skill for ${project.name} interface design"
+
+Then follow the skill's guidance for typography, color, motion, and themes.`
+      });
+    }
+
+    // Determine if web-artifacts-builder skill is needed
+    if (hasReact) {
+      skills.push({
+        name: 'web-artifacts-builder',
+        whenToUse: 'Building React components, forms, dashboards, or interactive web applications',
+        context: 'all React component development and implementation',
+        instructions: `**Key Technologies to Use:**
+- React 18+ with hooks
+- Tailwind CSS for styling
+- shadcn/ui component library
+- TypeScript for type safety
+
+**Example Usage:**
+When implementing components, the agent should explicitly state:
+"Activating web-artifacts-builder skill for React component implementation"
+
+Then follow the skill's patterns for:
+- Component structure and organization
+- Tailwind utility classes and responsive design
+- shadcn/ui component integration
+- State management patterns
+- Animation with Framer Motion`
+      });
+    }
+
+    return skills;
+  }
+
   private buildAgentsSection(analysis: AnalysisResult): string {
     let section = `## 🤖 AI Agents
 
@@ -254,14 +363,16 @@ ${protocol.progressTracking.map(p => `- ${p}`).join('\n')}`;
 **IMPORTANT INSTRUCTIONS FOR CLAUDE CODE:**
 
 1. **Read this entire prompt carefully** before starting any work
-2. **Managing Agent coordinates all activities** - defer to Managing Agent for decisions
-3. **Each agent should**:
+2. **USE THE REQUIRED SKILLS** specified in the Skills section - this is mandatory for quality output
+3. **Managing Agent coordinates all activities** - defer to Managing Agent for decisions
+4. **Each agent should**:
    - Focus on their assigned responsibilities
    - Use only their assigned MCP servers
+   - **Activate required skills** when working on frontend/UI components
    - Communicate through code comments and documentation
    - Request review from appropriate agents
-4. **Follow the task breakdown order** unless Managing Agent decides otherwise
-5. **Maintain code quality**:
+5. **Follow the task breakdown order** unless Managing Agent decides otherwise
+6. **Maintain code quality**:
    - Write clean, documented code
    - Follow TypeScript best practices
    - Include error handling
@@ -274,8 +385,9 @@ ${protocol.progressTracking.map(p => `- ${p}`).join('\n')}`;
 
 1. Initialize project structure using desktop-commander
 2. Set up Git repository and push to GitHub
-3. Delegate tasks to appropriate agents according to the Task Breakdown
-4. Monitor progress and coordinate between agents
+3. Review the Required Skills section and ensure agents know to use them
+4. Delegate tasks to appropriate agents according to the Task Breakdown
+5. Monitor progress and coordinate between agents
 
 Begin execution now!
 \`\`\`
@@ -291,15 +403,29 @@ Begin execution now!
   private buildStarterPrompt(analysis: AnalysisResult): string {
     const { project } = analysis;
     const managingAgent = analysis.requiredAgents.find(a => a.role.toLowerCase().includes('managing'));
+    const skills = this.determineRelevantSkills(analysis);
+    const skillNames = skills.map(s => s.name).join(' and ');
 
-    return `I have a project specification in PROJECT_PROMPT.md. Please act as the ${managingAgent?.name || 'Managing Agent'} and:
+    let starterPrompt = `I have a project specification in PROJECT_PROMPT.md. Please act as the ${managingAgent?.name || 'Managing Agent'} and:
 
 1. Read the PROJECT_PROMPT.md file completely
 2. Understand the project: ${project.name} - ${project.description}
-3. Review the ${analysis.requiredAgents.length} AI agents, their responsibilities, and the ${analysis.taskBreakdown.length} tasks
+3. Review the ${analysis.requiredAgents.length} AI agents, their responsibilities, and the ${analysis.taskBreakdown.length} tasks`;
+
+    if (skills.length > 0) {
+      starterPrompt += `
+4. **IMPORTANT:** Note the Required Skills section - you MUST use the ${skillNames} skill${skills.length > 1 ? 's' : ''} for all frontend/UI work
+5. Initialize the project structure in the current directory
+6. Set up Git repository and make the initial commit
+7. Begin executing the tasks in the order specified in the Task Breakdown`;
+    } else {
+      starterPrompt += `
 4. Initialize the project structure in the current directory
 5. Set up Git repository and make the initial commit
-6. Begin executing the tasks in the order specified in the Task Breakdown
+6. Begin executing the tasks in the order specified in the Task Breakdown`;
+    }
+
+    starterPrompt += `
 
 Key tech stack: ${[
   ...(project.techStack.frontend || []),
@@ -308,5 +434,13 @@ Key tech stack: ${[
 ].filter(Boolean).join(', ')}
 
 Start by reading PROJECT_PROMPT.md and then begin the implementation. Work systematically through the task list, coordinating with other agents as needed.`;
+
+    if (skills.length > 0) {
+      starterPrompt += `
+
+**Remember:** Activate the ${skillNames} skill${skills.length > 1 ? 's' : ''} when working on UI/frontend components!`;
+    }
+
+    return starterPrompt;
   }
 }
